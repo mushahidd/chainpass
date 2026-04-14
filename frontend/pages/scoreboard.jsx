@@ -3,6 +3,8 @@ import { useWeb3 } from "../utils/Web3Context";
 import { fetchGlobalTop10, fetchTeamTop10 } from "../utils/scoreboard";
 import TopPodium from "../components/TopPodium";
 import ScoreboardTable from "../components/ScoreboardTable";
+import Navbar from "../components/Navbar";
+import Ticker from "../components/Ticker";
 
 const TEAMS = [
   "Global",
@@ -40,47 +42,55 @@ export default function Scoreboard() {
   }, [contract, activeTab]);
 
   return (
-    <div style={styles.page}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>CHAMPIONS OF THE STANDS</h1>
-        <p style={styles.subtitle}>Verified On-Chain Stadium Attendance. Real fans, genuine rankings.</p>
-      </div>
+    <div style={styles.container}>
+      <Navbar />
+      <Ticker />
+      <main style={styles.content}>
+        <div style={styles.header}>
+          <h1 style={styles.title}>CHAMPIONS OF THE STANDS</h1>
+          <p style={styles.subtitle}>Verified On-Chain Stadium Attendance. Real fans, genuine rankings.</p>
+        </div>
 
-      <div style={styles.tabContainer}>
-        {TEAMS.map(team => (
-          <button 
-            key={team} 
-            style={{
-              ...styles.tab, 
-              ...(activeTab === team ? styles.activeTab : {})
-            }}
-            onClick={() => setActiveTab(team)}
-          >
-            {team}
-          </button>
-        ))}
-      </div>
+        <div style={styles.tabContainer}>
+          {TEAMS.map(team => (
+            <button 
+              key={team} 
+              style={{
+                ...styles.tab, 
+                ...(activeTab === team ? styles.activeTab : {})
+              }}
+              onClick={() => setActiveTab(team)}
+            >
+              {team}
+            </button>
+          ))}
+        </div>
 
-      {!contract ? (
-        <div style={styles.loading}>Connect your wallet to view the scoreboard.</div>
-      ) : loading ? (
-        <div style={styles.loading}>Scanning Blockchain...</div>
-      ) : fans.length === 0 ? (
-        <div style={styles.loading}>No attendance data yet. Deploy contract and redeem tickets first.</div>
-      ) : (
-        <>
-          <TopPodium fans={fans} />
-          <ScoreboardTable fans={fans} startIndex={3} />
-        </>
-      )}
+        {!contract ? (
+          <div style={styles.loading}>Connect your wallet to view the scoreboard.</div>
+        ) : loading ? (
+          <div style={styles.loading}>Scanning Blockchain...</div>
+        ) : fans.length === 0 ? (
+          <div style={styles.loading}>No attendance data yet. Deploy contract and redeem tickets first.</div>
+        ) : (
+          <>
+            <TopPodium fans={fans} />
+            <ScoreboardTable fans={fans} startIndex={3} />
+          </>
+        )}
+      </main>
     </div>
   );
 }
 
 const styles = {
-  page: {
+  container: {
+    background: "var(--bg)",
     minHeight: "100vh",
-    padding: "60px 20px",
+    color: "var(--text)"
+  },
+  content: {
+    padding: "40px 48px",
     maxWidth: "1200px",
     margin: "0 auto"
   },
