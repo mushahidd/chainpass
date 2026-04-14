@@ -1,59 +1,59 @@
 const hre = require("hardhat");
+const fs = require("fs");
+const path = require("path");
+
+function syncFrontendContractConfig(address, abi) {
+  const contractDataPath = path.join(__dirname, "../../frontend/utils/contractData.json");
+  fs.writeFileSync(contractDataPath, JSON.stringify({ address, abi }, null, 2));
+
+  const envPath = path.join(__dirname, "../../frontend/.env.local");
+  try {
+    let envData = fs.readFileSync(envPath, "utf8");
+    if (/NEXT_PUBLIC_CONTRACT_ADDRESS=.*/.test(envData)) {
+      envData = envData.replace(/NEXT_PUBLIC_CONTRACT_ADDRESS=.*/, `NEXT_PUBLIC_CONTRACT_ADDRESS="${address}"`);
+    } else {
+      envData += `\nNEXT_PUBLIC_CONTRACT_ADDRESS="${address}"\n`;
+    }
+    fs.writeFileSync(envPath, envData);
+  } catch (error) {
+    console.log("Could not auto-update frontend/.env.local:", error.message);
+  }
+}
 
 async function main() {
-  const [deployer, pcbVault, user1, user2] = await hre.ethers.getSigners();
+  if (hre.network.name === 'hardhat') {
+    throw new Error("Refusing to deploy on transient 'hardhat' network. Use --network localhost or npm run deploy:local.");
+  }
+
+  const [deployer] = await hre.ethers.getSigners();
 
   console.log("----------------------------------------------------");
   console.log("CHAINPASS PSL - DEPLOYMENT READY");
   console.log("----------------------------------------------------");
-  console.log("Deploying contracts with the account:", deployer.address);
-  console.log("PCB Vault Address:", pcbVault.address);
+  console.log("Network:", hre.network.name);
+  console.log("Deploying contracts with account:", deployer.address);
 
   // Deploy ChainPass Contract
   const ChainPass = await hre.ethers.getContractFactory("ChainPass");
-  const chainpass = await ChainPass.deploy(pcbVault.address);
+  const chainpass = await ChainPass.deploy();
 
   await chainpass.waitForDeployment();
   const contractAddress = await chainpass.getAddress();
 
-  console.log("ChainPass Contract deployed to:", contractAddress);
+  console.log("ChainPass contract deployed to:", contractAddress);
 
-  // Minting initial batch of match tickets for the demo
-  const sampleTickets = [
-    {
-      name: "PSL ELIMINATOR - KK vs LQ",
-      price: hre.ethers.parseEther("0.1"), // 0.1 ETH/MATIC
-      details: "General Enclosure, Row 4",
-      uri: "ipfs://test-ticket-1"
-    },
-    {
-      name: "PSL QUALIFIER - IU vs MS",
-      price: hre.ethers.parseEther("0.2"),
-      details: "VIP Box 12, Level 2",
-      uri: "ipfs://test-ticket-2"
-    },
-    {
-      name: "PSL FINAL - FINAL MATCH",
-      price: hre.ethers.parseEther("0.5"),
-      details: "Presidential Enclosure",
-      uri: "ipfs://test-ticket-3"
-    }
-  ];
+  // Authorize deployer as scanner for testing
+  const scannerTx = await chainpass.setScanner(deployer.address, true);
+  await scannerTx.wait();
+  console.log("Set deployer as authorized scanner.");
 
-  console.log("\nMinting sample tickets...");
-  for (let i = 0; i < sampleTickets.length; i++) {
-    const t = sampleTickets[i];
-    const tx = await chainpass.mintTicket(
-      user1.address,
-      t.uri,
-      t.price,
-      `${t.name} | ${t.details}`
-    );
-    await tx.wait();
-    console.log(`- Minted: ${t.name} (ID: ${i}) to ${user1.address}`);
-  }
+  const artifactPath = path.join(__dirname, "../artifacts/contracts/ChainPass.sol/ChainPass.json");
+  const artifact = require(artifactPath);
+  syncFrontendContractConfig(contractAddress, artifact.abi);
+  console.log("Updated frontend contract address and ABI.");
+  console.log("Next step: run `npm run initialize:local` to seed demo matches.");
 
-  console.log("\n----------------------------------------------------");
+  console.log("----------------------------------------------------");
   console.log("DEPLOYMENT COMPLETE");
   console.log("----------------------------------------------------");
 }

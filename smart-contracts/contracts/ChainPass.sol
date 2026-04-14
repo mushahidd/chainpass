@@ -2,122 +2,164 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
+error TicketIsSoulbound();
+error TicketAlreadyUsed();
+error NotAuthorizedScanner();
+error MatchNotActive();
+error WalletLimitReached();
+error SeatAlreadyTaken();
+error IncorrectPayment();
+error MatchSoldOut();
 
 /**
  * @title ChainPass PSL
- * @dev Blockchain-based ticketing system with anti-scalp price caps and royalty logic.
+ * @dev STRICT MATCH HIERARCHY, CNIC IDENTITY BINDING, AND DOUBLE-BOOKING PREVENTION
  */
-contract ChainPass is ERC721URIStorage, Ownable, ReentrancyGuard {
+contract ChainPass is ERC721URIStorage, Ownable {
+    uint256 public nextMatchId;
     uint256 private _nextTokenId;
-    
-    // 3% royalty to PCB
-    uint256 public constant ROYALTY_PERCENT = 3;
-    // 110% Maximum Resale Price Cap (10% over original)
-    uint256 public constant PRICE_CAP_PERCENT = 110;
+
+    struct Match {
+        string teams;
+        string stadium;
+        uint256 price;
+        uint256 maxCapacity;
+        uint256 currentMinted;
+        bool isActive;
+    }
 
     struct Ticket {
-        uint256 originalPrice;
-        uint256 currentPrice;
-        bool isForSale;
-        string matchDetails;
+        uint256 matchId;
+        string enclosure;
+        uint256 seatNumber;
+        bytes32 cnicHash;
+        bool isUsed;
     }
 
+    // --- State Mappings ---
+    mapping(uint256 => Match) public matches;
     mapping(uint256 => Ticket) public tickets;
-    address public pcbVault;
 
-    event TicketMinted(uint256 indexed tokenId, address indexed owner, uint256 price, string matchDetails);
-    event TicketListed(uint256 indexed tokenId, uint256 price);
-    event TicketSold(uint256 indexed tokenId, address indexed seller, address indexed buyer, uint256 price);
+    // matchId -> wallet -> count (Max 2)
+    mapping(uint256 => mapping(address => uint8)) public matchWalletMintCount;
+    // matchId -> enclosure -> seatNumber -> isTaken (Double-booking prevention)
+    mapping(uint256 => mapping(string => mapping(uint256 => bool))) public isSeatTaken;
 
-    constructor(address _pcbVault) ERC721("ChainPass PSL", "CPPSL") Ownable(msg.sender) {
-        pcbVault = _pcbVault;
+    mapping(address => bool) public scanners;
+
+    event MatchCreated(uint256 indexed matchId, string teams, string stadium, uint256 price);
+    event TicketMinted(uint256 indexed tokenId, uint256 indexed matchId, address owner, bytes32 cnicHash);
+    event TicketScanned(uint256 indexed tokenId, address indexed scanner);
+
+    constructor() ERC721("ChainPass PSL", "CPPSL") Ownable(msg.sender) {}
+
+    modifier onlyScanner() {
+        if (!scanners[msg.sender] && msg.sender != owner()) revert NotAuthorizedScanner();
+        _;
     }
+
+    // --- ADMIN PROTOCOLS ---
+
+    function setScanner(address scanner, bool status) public onlyOwner {
+        scanners[scanner] = status;
+    }
+
+    function createMatch(string memory teams, string memory stadium, uint256 price, uint256 maxCapacity) public onlyOwner {
+        matches[nextMatchId] = Match({
+            teams: teams,
+            stadium: stadium,
+            price: price,
+            maxCapacity: maxCapacity,
+            currentMinted: 0,
+            isActive: true
+        });
+        emit MatchCreated(nextMatchId, teams, stadium, price);
+        nextMatchId++;
+    }
+
+    function setMatchStatus(uint256 matchId, bool status) public onlyOwner {
+        matches[matchId].isActive = status;
+    }
+
+    // --- USER PROTOCOLS ---
 
     /**
-     * @dev Mint a new ticket. Only owner (PCB) can mint original tickets.
+     * @dev Public Minting Function enforcing CNIC binding, Seat Unicity, and Transaction Limits.
      */
-    function mintTicket(address to, string memory uri, uint256 price, string memory matchDetails) public onlyOwner {
+    function mintTicket(
+        uint256 _matchId,
+        string memory _enclosure,
+        uint256 _seatNumber,
+        bytes32 _cnicHash,
+        string memory _uri
+    ) public payable {
+        Match storage evData = matches[_matchId];
+        
+        if (!evData.isActive) revert MatchNotActive();
+        if (evData.currentMinted >= evData.maxCapacity) revert MatchSoldOut();
+        if (msg.value != evData.price) revert IncorrectPayment();
+        if (matchWalletMintCount[_matchId][msg.sender] >= 2) revert WalletLimitReached();
+        if (isSeatTaken[_matchId][_enclosure][_seatNumber]) revert SeatAlreadyTaken();
+
+        // Register constraints BEFORE mint
+        isSeatTaken[_matchId][_enclosure][_seatNumber] = true;
+        matchWalletMintCount[_matchId][msg.sender]++;
+        evData.currentMinted++;
+
         uint256 tokenId = _nextTokenId++;
-        _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
+        _safeMint(msg.sender, tokenId);
+        _setTokenURI(tokenId, _uri);
 
         tickets[tokenId] = Ticket({
-            originalPrice: price,
-            currentPrice: price,
-            isForSale: false,
-            matchDetails: matchDetails
+            matchId: _matchId,
+            enclosure: _enclosure,
+            seatNumber: _seatNumber,
+            cnicHash: _cnicHash,
+            isUsed: false
         });
 
-        emit TicketMinted(tokenId, to, price, matchDetails);
+        emit TicketMinted(tokenId, _matchId, msg.sender, _cnicHash);
     }
 
     /**
-     * @dev List a ticket for resale. Enforcement of the price cap happens here.
+     * @dev Scan ticket at the gateway physical barrier.
      */
-    function listTicket(uint256 tokenId, uint256 price) public {
-        require(ownerOf(tokenId) == msg.sender, "Not the ticket owner");
-        
-        // ANTI-SCALP LOGIC: PRICE_CAP_PERCENT (110%) Enforcement
-        uint256 maxAllowedPrice = (tickets[tokenId].originalPrice * PRICE_CAP_PERCENT) / 100;
-        require(price <= maxAllowedPrice, "Price exceeds 110% cap (Anti-Scalp Rule)");
-
-        tickets[tokenId].currentPrice = price;
-        tickets[tokenId].isForSale = true;
-
-        emit TicketListed(tokenId, price);
+    function markTicketAsUsed(uint256 tokenId) public onlyScanner {
+        if (tickets[tokenId].isUsed) revert TicketAlreadyUsed();
+        tickets[tokenId].isUsed = true;
+        emit TicketScanned(tokenId, msg.sender);
     }
 
-    /**
-     * @dev Buy a listed ticket. Includes royalty split.
-     */
-    function buyTicket(uint256 tokenId) public payable nonReentrant {
-        Ticket storage ticket = tickets[tokenId];
-        require(ticket.isForSale, "Ticket not for sale");
-        require(msg.value >= ticket.currentPrice, "Insufficient funds");
+    // --- READ FUNCTIONS ---
 
-        address seller = ownerOf(tokenId);
-        uint256 salePrice = ticket.currentPrice;
-
-        // Calculate 3% royalty
-        uint256 royaltyAmount = (salePrice * ROYALTY_PERCENT) / 100;
-        uint256 sellerAmount = salePrice - royaltyAmount;
-
-        // Mark as not for sale during transfer
-        ticket.isForSale = false;
-
-        // Distribute funds
-        (bool pcbSuccess, ) = payable(pcbVault).call{value: royaltyAmount}("");
-        require(pcbSuccess, "PCB royalty transfer failed");
-
-        (bool sellerSuccess, ) = payable(seller).call{value: sellerAmount}("");
-        require(sellerSuccess, "Seller transfer failed");
-
-        // Transfer NFT
-        _transfer(seller, msg.sender, tokenId);
-
-        emit TicketSold(tokenId, seller, msg.sender, salePrice);
+    function getMatchCount() public view returns (uint256) {
+        return nextMatchId;
     }
 
-    /**
-     * @dev Update PCB Vault address.
-     */
-    function setPcbVault(address _newVault) public onlyOwner {
-        pcbVault = _newVault;
+    function getTicketData(uint256 tokenId) public view returns (
+        address owner,
+        Ticket memory ticketObj,
+        Match memory matchObj
+    ) {
+        owner = ownerOf(tokenId);
+        ticketObj = tickets[tokenId];
+        matchObj = matches[ticketObj.matchId];
     }
 
-    /**
-     * @dev Simple view to get ticket info
-     */
-    function getTicket(uint256 tokenId) public view returns (Ticket memory) {
-        return tickets[tokenId];
-    }
-
-    /**
-     * @dev Get total number of tickets minted
-     */
     function totalSupply() public view returns (uint256) {
         return _nextTokenId;
+    }
+
+    // --- SOULBOUND V2 LOCK ---
+
+    function transferFrom(address, address, uint256) public virtual override(ERC721, IERC721) {
+        revert TicketIsSoulbound();
+    }
+
+    function safeTransferFrom(address, address, uint256, bytes memory) public virtual override(ERC721, IERC721) {
+        revert TicketIsSoulbound();
     }
 }

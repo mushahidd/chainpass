@@ -69,7 +69,14 @@ npx hardhat compile
 To deploy to a local node:
 
 ```bash
+npx hardhat node
+```
+
+In another terminal:
+
+```bash
 npx hardhat run scripts/deploy.js --network localhost
+npx hardhat run scripts/initializeMatches.js --network localhost
 ```
 
 ## Core Flows
