@@ -27,9 +27,24 @@ contract ChainPass is ERC721URIStorage, Ownable, ReentrancyGuard {
     mapping(uint256 => Ticket) public tickets;
     address public pcbVault;
 
+    // --- SCOREBOARD STATE VARIABLES ---
+    mapping(address => uint256) public totalMatchesAttended;
+    mapping(address => mapping(string => uint256)) public teamMatchesAttended;
+
+    struct FanScore {
+        address wallet;
+        uint256 score;
+    }
+
+    FanScore[10] public topGlobalFans;
+    mapping(string => FanScore[10]) public topTeamFans;
+    mapping(uint256 => bool) public isTicketRedeemed;
+    // ----------------------------------
+
     event TicketMinted(uint256 indexed tokenId, address indexed owner, uint256 price, string matchDetails);
     event TicketListed(uint256 indexed tokenId, uint256 price);
     event TicketSold(uint256 indexed tokenId, address indexed seller, address indexed buyer, uint256 price);
+    event TicketRedeemed(uint256 indexed tokenId, address indexed viewer);
 
     constructor(address _pcbVault) ERC721("ChainPass PSL", "CPPSL") Ownable(msg.sender) {
         pcbVault = _pcbVault;
@@ -106,6 +121,98 @@ contract ChainPass is ERC721URIStorage, Ownable, ReentrancyGuard {
     function setPcbVault(address _newVault) public onlyOwner {
         pcbVault = _newVault;
     }
+
+    // --- SCOREBOARD / REDEMPTION LOGIC ---
+    
+    /**
+     * @dev Redeem a ticket at the stadium gates. Updates scoreboards.
+     * Only the owner (Admin/Scanner) can call this for now.
+     */
+    function redeemTicket(uint256 tokenId, string memory team1, string memory team2) public onlyOwner nonReentrant {
+        require(!isTicketRedeemed[tokenId], "Ticket already redeemed");
+        
+        address attendee = ownerOf(tokenId);
+        
+        isTicketRedeemed[tokenId] = true;
+        totalMatchesAttended[attendee] += 1;
+        teamMatchesAttended[attendee][team1] += 1;
+        teamMatchesAttended[attendee][team2] += 1;
+
+        _updateGlobalLeaderboard(attendee, totalMatchesAttended[attendee]);
+        _updateTeamLeaderboard(attendee, team1, teamMatchesAttended[attendee][team1]);
+        _updateTeamLeaderboard(attendee, team2, teamMatchesAttended[attendee][team2]);
+
+        emit TicketRedeemed(tokenId, attendee);
+    }
+
+    function _updateGlobalLeaderboard(address _fan, uint256 _score) internal {
+        // Remove old entry if exists to avoid duplicates
+        _removeFanFromGlobal(_fan);
+        // Insert sort
+        for (uint256 i = 0; i < 10; i++) {
+            if (_score > topGlobalFans[i].score) {
+                for (uint256 j = 9; j > i; j--) {
+                    topGlobalFans[j] = topGlobalFans[j - 1];
+                }
+                topGlobalFans[i] = FanScore(_fan, _score);
+                break;
+            }
+        }
+    }
+
+    function _removeFanFromGlobal(address _fan) internal {
+        bool found = false;
+        for (uint256 i = 0; i < 10; i++) {
+            if (found && i > 0) {
+                topGlobalFans[i - 1] = topGlobalFans[i];
+                if (i == 9) topGlobalFans[9] = FanScore(address(0), 0);
+            } else if (topGlobalFans[i].wallet == _fan) {
+                found = true;
+                if (i == 9) topGlobalFans[9] = FanScore(address(0), 0);
+            }
+        }
+        if (found && topGlobalFans[9].wallet == _fan) {
+            topGlobalFans[9] = FanScore(address(0), 0);
+        }
+    }
+
+    function _updateTeamLeaderboard(address _fan, string memory _team, uint256 _score) internal {
+        _removeFanFromTeam(_fan, _team);
+        for (uint256 i = 0; i < 10; i++) {
+            if (_score > topTeamFans[_team][i].score) {
+                for (uint256 j = 9; j > i; j--) {
+                    topTeamFans[_team][j] = topTeamFans[_team][j - 1];
+                }
+                topTeamFans[_team][i] = FanScore(_fan, _score);
+                break;
+            }
+        }
+    }
+
+    function _removeFanFromTeam(address _fan, string memory _team) internal {
+        bool found = false;
+        for (uint256 i = 0; i < 10; i++) {
+            if (found && i > 0) {
+                topTeamFans[_team][i - 1] = topTeamFans[_team][i];
+                if (i == 9) topTeamFans[_team][9] = FanScore(address(0), 0);
+            } else if (topTeamFans[_team][i].wallet == _fan) {
+                found = true;
+                if (i == 9) topTeamFans[_team][9] = FanScore(address(0), 0);
+            }
+        }
+        if (found && topTeamFans[_team][9].wallet == _fan) {
+            topTeamFans[_team][9] = FanScore(address(0), 0);
+        }
+    }
+
+    function getTopGlobalFans() public view returns (FanScore[10] memory) {
+        return topGlobalFans;
+    }
+
+    function getTopTeamFans(string memory team) public view returns (FanScore[10] memory) {
+        return topTeamFans[team];
+    }
+    // ---------------------------------------------
 
     /**
      * @dev Simple view to get ticket info

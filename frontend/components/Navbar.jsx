@@ -6,10 +6,11 @@ export default function Navbar() {
   const router = useRouter();
   const { account, connectWallet, loading } = useWeb3();
 
-  const links = [
+    const links = [
     { label: 'HOME', href: '/', variant: 'secondary' },
     { label: 'MARKETPLACE', href: '/marketplace', variant: 'primary' },
     { label: 'MY TICKETS', href: '/tickets', variant: 'primary' },
+    { label: 'SCOREBOARD', href: '/scoreboard', variant: 'primary' },
     { label: 'DOCS', href: '/docs', variant: 'secondary' },
   ];
 

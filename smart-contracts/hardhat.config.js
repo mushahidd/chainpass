@@ -10,6 +10,11 @@ module.exports = {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
     },
+    wirefluid: {
+      url: "https://evm.wirefluid.com",
+      chainId: 10001, // Example Chain ID based on standard testnets or random
+      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
   },
   solidity: {
     version: "0.8.24",
