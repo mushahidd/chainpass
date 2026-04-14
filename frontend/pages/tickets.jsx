@@ -48,7 +48,7 @@ function QRCode({ id }) {
 }
 
 export default function MyTickets() {
-  const { contract, account } = useWeb3();
+  const { contract, account, isCorrectNetwork, uiError } = useWeb3();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [listingId, setListingId] = useState(null);
@@ -110,6 +110,11 @@ export default function MyTickets() {
       return null;
     }
 
+    if (!isCorrectNetwork) {
+      setTxStatus({ type: 'error', message: 'Switch to WireFluid network (92533)' });
+      return null;
+    }
+
     const parsed = parseFloat(listPrice);
     if (Number.isNaN(parsed) || parsed <= 0) {
       setTxStatus({ type: 'error', message: 'Enter a valid price greater than 0.' });
@@ -129,10 +134,20 @@ export default function MyTickets() {
     setTxStatus({ type: '', message: '' });
 
     try {
-      const network = await contract.runner.provider.getNetwork();
+      const provider = contract.runner.provider;
+      const signer = contract.runner;
+      const network = await provider.getNetwork();
       const chainId = Number(network.chainId);
       const contractAddress = contract.target;
 
+      if (chainId !== 92533) {
+        setTxStatus({ type: 'error', message: 'Please switch to WireFluid network.' });
+        setListingId(null);
+        return null;
+      }
+
+      console.log('[TX_DEBUG] provider:', provider);
+      console.log('[TX_DEBUG] signer:', signer);
       console.log('[TX_DEBUG] wallet address:', account);
       console.log('[TX_DEBUG] network chainId:', chainId);
       console.log('[TX_DEBUG] contract address:', contractAddress);
@@ -180,9 +195,9 @@ export default function MyTickets() {
             <p style={styles.desc}>
               Manage your verified PSL tickets. View your secure entry tokens or list tickets for resale within fair-play limits.
             </p>
-            {txStatus.message ? (
-              <div style={{ ...styles.txBanner, ...(txStatus.type === 'error' ? styles.txError : styles.txSuccess) }}>
-                {txStatus.message}
+            {(uiError || txStatus.message) ? (
+              <div style={{ ...styles.txBanner, ...((uiError || txStatus.type === 'error') ? styles.txError : styles.txSuccess) }}>
+                {uiError || txStatus.message}
               </div>
             ) : null}
           </header>
@@ -234,7 +249,7 @@ export default function MyTickets() {
                           <button 
                             style={styles.listBtn} 
                             onClick={() => handleList(t.id, t.originalPrice)}
-                            disabled={listingId === t.id && !listPrice}
+                            disabled={(listingId === t.id && !listPrice) || !account || !isCorrectNetwork || !!uiError}
                           >
                             {listingId === t.id && listPrice ? 'LISTING...' : 'LIST_FOR_SALE'}
                           </button>

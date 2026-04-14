@@ -82,7 +82,7 @@ function QRCode({ id, match, seat }) {
 }
 
 function PriceCapDemo() {
-  const { contract, account } = useWeb3();
+  const { contract, account, isCorrectNetwork, uiError } = useWeb3();
   const [price, setPrice] = useState('');
   const [verdict, setVerdict] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -93,7 +93,18 @@ function PriceCapDemo() {
   const over = parseFloat(price) > MAX;
 
   async function handleSubmit() {
-    if (!contract || !price) return;
+    if (!contract || !account) {
+      setVerdict('reject');
+      setErrorMsg('Connect MetaMask first.');
+      return;
+    }
+    if (!isCorrectNetwork) {
+      setVerdict('reject');
+      setErrorMsg('Switch to WireFluid network (92533).');
+      return;
+    }
+    if (!price) return;
+
     setLoading(true);
     setVerdict(null);
     setErrorMsg('');
@@ -136,7 +147,7 @@ function PriceCapDemo() {
         <button 
           onClick={handleSubmit} 
           style={{...styles.submitBtn, borderColor: loading ? 'var(--dim)' : 'var(--border2)'}}
-          disabled={loading}
+          disabled={loading || !account || !isCorrectNetwork || !!uiError}
         >
           {loading ? 'WAITING_FOR_MINING...' : 'SUBMIT_TXN →'}
         </button>

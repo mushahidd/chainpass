@@ -6,10 +6,22 @@ import { useWeb3 } from '../utils/Web3Context';
 import { ethers } from 'ethers';
 
 export default function Marketplace() {
-  const { contract, account } = useWeb3();
+  const { contract, account, isCorrectNetwork, uiError } = useWeb3();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [buyingId, setBuyingId] = useState(null);
+  const [txStatus, setTxStatus] = useState({ type: '', message: '' });
+
+  const getRevertReason = (err) => {
+    return (
+      err?.reason ||
+      err?.shortMessage ||
+      err?.info?.error?.message ||
+      err?.error?.message ||
+      err?.message ||
+      'Unknown transaction error'
+    );
+  };
 
   useEffect(() => {
     if (contract) {
@@ -43,16 +55,56 @@ export default function Marketplace() {
   };
 
   const buyTicket = async (id, price) => {
-    if (!account) return alert("Please connect your wallet first!");
+    if (!account) {
+      setTxStatus({ type: 'error', message: 'Connect MetaMask first.' });
+      return null;
+    }
+    if (!isCorrectNetwork) {
+      setTxStatus({ type: 'error', message: 'Switch to WireFluid network (92533)' });
+      return null;
+    }
+    if (!contract) {
+      setTxStatus({ type: 'error', message: 'Contract not initialized.' });
+      return null;
+    }
+
     setBuyingId(id);
+    setTxStatus({ type: '', message: '' });
     try {
+      const provider = contract.runner.provider;
+      const signer = contract.runner;
+      const network = await provider.getNetwork();
+      const chainId = Number(network.chainId);
+      const contractAddress = contract.target;
+
+      if (chainId !== 92533) {
+        setTxStatus({ type: 'error', message: 'Switch to WireFluid network (92533)' });
+        setBuyingId(null);
+        return null;
+      }
+
+      console.log('[TX_DEBUG] provider:', provider);
+      console.log('[TX_DEBUG] signer:', signer);
+      console.log('[TX_DEBUG] contract instance:', contract);
+      console.log('[TX_DEBUG] wallet address:', account);
+      console.log('[TX_DEBUG] network chainId:', chainId);
+      console.log('[TX_DEBUG] contract address:', contractAddress);
+
       const tx = await contract.buyTicket(id, { value: ethers.parseEther(price) });
-      await tx.wait();
-      alert("Ticket Purchased Successfully!");
+      console.log('[TX_DEBUG] transaction hash:', tx.hash);
+
+      const receipt = await tx.wait();
+      console.log('[TX_DEBUG] confirmation block:', receipt.blockNumber);
+
+      setTxStatus({ type: 'success', message: `Success: ticket purchased. Tx: ${tx.hash.slice(0, 10)}...` });
       loadTickets();
+      return tx.hash;
     } catch (err) {
-      console.error("Purchase failed:", err);
-      alert("Transaction Failed. Check console for details.");
+      const reason = getRevertReason(err);
+      console.error('Purchase failed:', err);
+      console.error('[TX_DEBUG] revert reason:', reason);
+      setTxStatus({ type: 'error', message: `Transaction failed: ${reason}` });
+      return null;
     } finally {
       setBuyingId(null);
     }
@@ -76,6 +128,11 @@ export default function Marketplace() {
               Verified PSL tickets listed by fans. Every price is strictly within the 110% cap logic. 
               <br />Powered by smart contract enforcement.
             </p>
+            {(uiError || txStatus.message) ? (
+              <div style={{ ...styles.txBanner, ...((txStatus.type === 'error' || uiError) ? styles.txError : styles.txSuccess) }}>
+                {uiError || txStatus.message}
+              </div>
+            ) : null}
           </header>
 
           {loading ? (
@@ -116,7 +173,7 @@ export default function Marketplace() {
                   <button 
                     style={styles.buyBtn} 
                     onClick={() => buyTicket(t.id, t.currentPrice)}
-                    disabled={buyingId === t.id}
+                    disabled={buyingId === t.id || !account || !isCorrectNetwork || !!uiError}
                   >
                     {buyingId === t.id ? 'PENDING_CONFIRMATION...' : 'PURCHASE_NFT →'}
                   </button>
@@ -139,6 +196,23 @@ const styles = {
   container: { background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)' },
   main: { padding: '60px 48px', maxWidth: '1440px', margin: '0 auto' },
   header: { marginBottom: '60px' },
+  txBanner: {
+    marginTop: '16px',
+    padding: '12px 14px',
+    border: '1px solid',
+    fontFamily: 'var(--mono)',
+    fontSize: '10px',
+    letterSpacing: '0.8px',
+    background: 'rgba(255,255,255,0.03)',
+  },
+  txSuccess: {
+    borderColor: 'var(--g)',
+    color: 'var(--g)',
+  },
+  txError: {
+    borderColor: 'var(--danger)',
+    color: '#ff7a7a',
+  },
   secTag: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--g)', letterSpacing: '3px', marginBottom: '12px' },
   title: { fontFamily: 'var(--display)', fontSize: '64px', letterSpacing: '2px', marginBottom: '20px' },
   desc: { fontFamily: 'var(--body)', fontSize: '16px', color: 'var(--muted)', lineHeight: 1.6, maxWidth: '600px' },
