@@ -16,7 +16,7 @@ function makeQRPattern(seed) {
 }
 
 function QRCode({ id }) {
-  const [cells, setCells] = useState(() => makeQRPattern(Date.now()));
+  const [cells, setCells] = useState(() => makeQRPattern(id * 54321));
   const [timer, setTimer] = useState(30);
 
   useEffect(() => {
@@ -93,7 +93,11 @@ export default function MyTickets() {
       }
       setTickets(myItems);
     } catch (err) {
-      console.error("Error loading tickets:", err);
+      if (err?.code === "BAD_DATA" || err?.message?.includes("could not decode")) {
+        console.warn("[MyTickets] Contract not found on current network. Deploy it first.");
+      } else {
+        console.error("Error loading tickets:", err);
+      }
     } finally {
       setLoading(false);
     }

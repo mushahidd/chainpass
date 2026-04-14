@@ -36,7 +36,11 @@ export default function Marketplace() {
       }
       setTickets(items);
     } catch (err) {
-      console.error("Error loading tickets:", err);
+      if (err?.code === "BAD_DATA" || err?.message?.includes("could not decode")) {
+        console.warn("[Marketplace] Contract not found on current network. Deploy it first.");
+      } else {
+        console.error("Error loading tickets:", err);
+      }
     } finally {
       setLoading(false);
     }
