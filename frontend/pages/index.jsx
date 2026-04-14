@@ -56,10 +56,10 @@ export default function Home() {
 
               <div style={styles.badges}>
                 {[
-                  { label: 'POLYGON_MAINNET', gold: false },
-                  { label: 'WEB3AUTH', gold: false },
-                  { label: 'EASYPAY_BRIDGE', gold: true },
-                  { label: 'CHAINLINK_ORACLE', gold: false },
+                  { label: 'WIREFLUID_TESTNET', gold: false },
+                  { label: 'METAMASK_SIGNIN', gold: false },
+                  { label: 'WIREFLUID_BRIDGE', gold: true },
+                  { label: 'MATCH_DATA_ORACLE', gold: false },
                 ].map((b) => (
                   <span
                     key={b.label}
