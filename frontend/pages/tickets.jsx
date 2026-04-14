@@ -53,6 +53,18 @@ export default function MyTickets() {
   const [loading, setLoading] = useState(true);
   const [listingId, setListingId] = useState(null);
   const [listPrice, setListPrice] = useState('');
+  const [txStatus, setTxStatus] = useState({ type: '', message: '' });
+
+  const getRevertReason = (err) => {
+    return (
+      err?.reason ||
+      err?.shortMessage ||
+      err?.info?.error?.message ||
+      err?.error?.message ||
+      err?.message ||
+      'Unknown transaction error'
+    );
+  };
 
   useEffect(() => {
     if (contract && account) {
@@ -88,24 +100,66 @@ export default function MyTickets() {
   };
 
   const handleList = async (id, originalPrice) => {
-    if (!listPrice) return alert("Please enter a price");
+    if (!listPrice) {
+      setTxStatus({ type: 'error', message: 'Please enter a price.' });
+      return null;
+    }
+
+    if (!contract || !account) {
+      setTxStatus({ type: 'error', message: 'Connect MetaMask first.' });
+      return null;
+    }
+
+    const parsed = parseFloat(listPrice);
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      setTxStatus({ type: 'error', message: 'Enter a valid price greater than 0.' });
+      return null;
+    }
+
     const maxAllowed = parseFloat(originalPrice) * 1.1;
-    if (parseFloat(listPrice) > maxAllowed) {
-       return alert(`ANTI-SCALP ALERT: Max allowed price is ${maxAllowed.toFixed(4)} ETH (110% cap)`);
+    if (parsed > maxAllowed) {
+      setTxStatus({
+        type: 'error',
+        message: `ANTI-SCALP ALERT: Max allowed price is ${maxAllowed.toFixed(4)} ETH (110% cap).`,
+      });
+      return null;
     }
 
     setListingId(id);
+    setTxStatus({ type: '', message: '' });
+
     try {
+      const network = await contract.runner.provider.getNetwork();
+      const chainId = Number(network.chainId);
+      const contractAddress = contract.target;
+
+      console.log('[TX_DEBUG] wallet address:', account);
+      console.log('[TX_DEBUG] network chainId:', chainId);
+      console.log('[TX_DEBUG] contract address:', contractAddress);
+      console.log('[TX_DEBUG] contract instance:', contract);
+
       const tx = await contract.listTicket(id, ethers.parseEther(listPrice));
-      await tx.wait();
-      alert("Ticket Listed Successfully!");
+      console.log('[TX_DEBUG] transaction hash:', tx.hash);
+
+      const receipt = await tx.wait();
+      console.log('[TX_DEBUG] confirmation block:', receipt.blockNumber);
+
+      setTxStatus({
+        type: 'success',
+        message: `Success: ticket listed on-chain. Tx: ${tx.hash.slice(0, 10)}...`,
+      });
+
       loadMyTickets();
       setListingId(null);
       setListPrice('');
+      return tx.hash;
     } catch (err) {
-      console.error("Listing failed:", err);
-      alert("Transaction Failed.");
+      const reason = getRevertReason(err);
+      console.error('Listing failed:', err);
+      console.error('[TX_DEBUG] revert reason:', reason);
+      setTxStatus({ type: 'error', message: `Transaction failed: ${reason}` });
       setListingId(null);
+      return null;
     }
   };
 
@@ -126,6 +180,11 @@ export default function MyTickets() {
             <p style={styles.desc}>
               Manage your verified PSL tickets. View your secure entry tokens or list tickets for resale within fair-play limits.
             </p>
+            {txStatus.message ? (
+              <div style={{ ...styles.txBanner, ...(txStatus.type === 'error' ? styles.txError : styles.txSuccess) }}>
+                {txStatus.message}
+              </div>
+            ) : null}
           </header>
 
           {!account ? (
@@ -207,6 +266,23 @@ const styles = {
   secTag: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--g)', letterSpacing: '3px', marginBottom: '12px' },
   title: { fontFamily: 'var(--display)', fontSize: '64px', letterSpacing: '2px', marginBottom: '20px' },
   desc: { fontFamily: 'var(--body)', fontSize: '16px', color: 'var(--muted)', lineHeight: 1.6, maxWidth: '600px' },
+  txBanner: {
+    marginTop: '16px',
+    padding: '12px 14px',
+    border: '1px solid',
+    fontFamily: 'var(--mono)',
+    fontSize: '10px',
+    letterSpacing: '0.8px',
+    background: 'rgba(255,255,255,0.03)',
+  },
+  txSuccess: {
+    borderColor: 'var(--g)',
+    color: 'var(--g)',
+  },
+  txError: {
+    borderColor: 'var(--danger)',
+    color: '#ff7a7a',
+  },
   loading: { fontFamily: 'var(--mono)', fontSize: '14px', color: 'var(--muted)', textAlign: 'center', padding: '100px' },
   empty: { textAlign: 'center', padding: '100px', background: 'var(--surface)', border: '1px solid var(--border)' },
   emptyHex: { 

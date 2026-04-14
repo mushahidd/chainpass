@@ -20,6 +20,18 @@ export function Web3Provider({ children }) {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const accounts = await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
+      const network = await provider.getNetwork();
+      const walletAddress = accounts[0];
+      const chainId = Number(network.chainId);
+      const expectedChainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID || contractInfo.chainId || 0);
+
+      if (!ethers.isAddress(contractInfo.address)) {
+        throw new Error(`Invalid contract address in config: ${contractInfo.address}`);
+      }
+
+      if (expectedChainId && chainId !== expectedChainId) {
+        throw new Error(`Wrong network. Connected chainId=${chainId}, expected=${expectedChainId}`);
+      }
       
       const chainPassContract = new ethers.Contract(
         contractInfo.address,
@@ -27,11 +39,18 @@ export function Web3Provider({ children }) {
         signer
       );
 
-      setAccount(accounts[0]);
+      console.log("[WEB3_DEBUG] provider:", provider);
+      console.log("[WEB3_DEBUG] signer:", signer);
+      console.log("[WEB3_DEBUG] contract instance:", chainPassContract);
+      console.log("[WEB3_DEBUG] wallet address:", walletAddress);
+      console.log("[WEB3_DEBUG] network chainId:", chainId);
+      console.log("[WEB3_DEBUG] contract address:", contractInfo.address);
+
+      setAccount(walletAddress);
       setContract(chainPassContract);
-      console.log("Connected to:", accounts[0]);
     } catch (error) {
       console.error("Connection failed:", error);
+      alert(error?.message || "Wallet connection failed");
     } finally {
       setLoading(false);
     }
@@ -42,7 +61,10 @@ export function Web3Provider({ children }) {
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', (accounts) => {
         if (accounts.length > 0) setAccount(accounts[0]);
-        else setAccount(null);
+        else {
+          setAccount(null);
+          setContract(null);
+        }
       });
     }
   }, []);
