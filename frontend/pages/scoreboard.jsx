@@ -61,8 +61,12 @@ export default function Scoreboard() {
         ))}
       </div>
 
-      {loading ? (
+      {!contract ? (
+        <div style={styles.loading}>Connect your wallet to view the scoreboard.</div>
+      ) : loading ? (
         <div style={styles.loading}>Scanning Blockchain...</div>
+      ) : fans.length === 0 ? (
+        <div style={styles.loading}>No attendance data yet. Deploy contract and redeem tickets first.</div>
       ) : (
         <>
           <TopPodium fans={fans} />
@@ -107,7 +111,9 @@ const styles = {
   },
   tab: {
     background: "transparent",
-    border: "1px solid var(--dim)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--dim)",
     color: "var(--text)",
     padding: "8px 16px",
     borderRadius: "20px",

@@ -14,7 +14,8 @@ function makeQRPattern(seed) {
 
 function QRCode({ id, match, seat }) {
   const { account, contract } = useWeb3();
-  const [cells, setCells] = useState(() => makeQRPattern(Date.now() + id * 9999));
+  // FIXED HYDRATION ERROR: Use a deterministic seed initially so SSR matches Client
+  const [cells, setCells] = useState(() => makeQRPattern(id * 12345));
   const [timer, setTimer] = useState(id === 1 ? 30 : 18);
   const [signed, setSigned] = useState(false);
 
