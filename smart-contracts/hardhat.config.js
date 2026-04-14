@@ -1,3 +1,4 @@
+require("dotenv").config();
 require("@nomicfoundation/hardhat-ethers");
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -12,7 +13,7 @@ module.exports = {
     },
     wirefluid: {
       url: "https://evm.wirefluid.com",
-      chainId: 10001, // Example Chain ID based on standard testnets or random
+      chainId: 92533, // Official WireFluid Chain ID
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
   },

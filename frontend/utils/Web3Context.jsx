@@ -17,20 +17,54 @@ export function Web3Provider({ children }) {
     
     setLoading(true);
     try {
+      // Prompt user to add/switch to WireFluid Network
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: '0x16975' }], // 92533 in Hex
+        });
+      } catch (switchError) {
+        // This error code indicates that the chain has not been added to MetaMask.
+        if (switchError.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [
+                {
+                  chainId: '0x16975',
+                  chainName: 'WireFluid Testnet',
+                  rpcUrls: ['https://evm.wirefluid.com'],
+                  nativeCurrency: {
+                    name: 'WireFluid',
+                    symbol: 'WIRE',
+                    decimals: 18,
+                  },
+                  blockExplorerUrls: ['https://wirefluidscan.com'],
+                },
+              ],
+            });
+          } catch (addError) {
+            throw new Error("Failed to add WireFluid testnet to your wallet.");
+          }
+        } else {
+          throw new Error("Failed to switch to WireFluid Testnet. Please do it manually.");
+        }
+      }
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       const accounts = await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
       const network = await provider.getNetwork();
       const walletAddress = accounts[0];
       const chainId = Number(network.chainId);
-      const expectedChainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID || contractInfo.chainId || 0);
+
+      // Verify we actually are on WireFluid (92533)
+      if (chainId !== 92533) {
+        throw new Error(`Wrong network. Connected chainId=${chainId}, expected=92533 (WireFluid)`);
+      }
 
       if (!ethers.isAddress(contractInfo.address)) {
         throw new Error(`Invalid contract address in config: ${contractInfo.address}`);
-      }
-
-      if (expectedChainId && chainId !== expectedChainId) {
-        throw new Error(`Wrong network. Connected chainId=${chainId}, expected=${expectedChainId}`);
       }
       
       const chainPassContract = new ethers.Contract(
