@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useWeb3 } from '../utils/Web3Context';
+import { useWeb3, WEB3_UI_STATES } from '../utils/Web3Context';
 
 export default function Navbar() {
   const router = useRouter();
-  const { account, connectWallet, loading } = useWeb3();
+  const { walletAddress, connectWallet, loading, currentState } = useWeb3();
 
   const links = [
     { label: 'HOME', href: '/', variant: 'secondary' },
@@ -14,7 +14,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav style={styles.nav}>
+    <nav className="app-nav" style={styles.nav}>
       <Link href="/" style={styles.logoMark}>
         <img
           src="/chainpass-logo.png"
@@ -23,13 +23,13 @@ export default function Navbar() {
         />
         <div>
           <div style={styles.logoText}>
-            <span style={{ color: 'var(--g)' }}>CHAIN</span>PASS
+            <span style={{ color: 'var(--g)' }}>Chain</span>Pass
           </div>
-          <div style={styles.logoSub}>PSL · BLOCKCHAIN TICKETING</div>
+          <div style={styles.logoSub}>WireFluid Blockchain Ticketing</div>
         </div>
       </Link>
 
-      <div style={styles.navCenter}>
+      <div className="app-nav-center" style={styles.navCenter}>
         {links.map((link) => (
           <Link
             key={link.href}
@@ -44,9 +44,15 @@ export default function Navbar() {
       <button 
         className="nav-cta"
         onClick={connectWallet}
-        disabled={loading}
+        disabled={loading || currentState === WEB3_UI_STATES.TX_PENDING}
       >
-        {loading ? '// CONNECTING...' : account ? `// ${account.slice(0, 6)}...${account.slice(-4)}` : '// CONNECT_WALLET'}
+        {loading
+          ? '// CONNECTING...'
+          : walletAddress
+            ? currentState === WEB3_UI_STATES.CORRECT_NETWORK
+              ? `// CONNECTED ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+              : `// CHAIN_BLOCKED ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+            : '// CONNECT_WALLET'}
       </button>
 
     </nav>
@@ -58,42 +64,46 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '20px 48px',
+    padding: '16px 32px',
     borderBottom: '1px solid var(--border)',
     background: 'rgba(4,8,10,0.92)',
-    backdropFilter: 'blur(12px)',
+    backdropFilter: 'blur(14px)',
     position: 'sticky',
     top: 0,
-    zIndex: 100,
+    zIndex: 200,
+    boxShadow: '0 8px 22px rgba(0, 0, 0, 0.3)',
   },
   logoMark: {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
+    gap: '10px',
     textDecoration: 'none',
   },
   logoImage: {
-    width: '60px',
-    height: '60px',
+    width: '46px',
+    height: '46px',
     objectFit: 'cover',
-    borderRadius: '50%',
+    borderRadius: '14px',
     flexShrink: 0,
+    border: '1px solid var(--border2)',
+    boxShadow: '0 8px 18px rgba(0, 255, 106, 0.14)',
   },
   logoText: {
     fontFamily: 'var(--display)',
-    fontSize: '22px',
-    letterSpacing: '3px',
+    fontSize: '20px',
+    fontWeight: 700,
+    letterSpacing: '0.2px',
     color: 'var(--text)',
   },
   logoSub: {
-    fontFamily: 'var(--mono)',
-    fontSize: '8px',
+    fontFamily: 'var(--body)',
+    fontSize: '11px',
     color: 'var(--muted)',
-    letterSpacing: '2px',
-    marginTop: '1px',
+    letterSpacing: '0.2px',
+    marginTop: '2px',
   },
   navCenter: {
     display: 'flex',
-    gap: '10px',
+    gap: '8px',
   },
 };
