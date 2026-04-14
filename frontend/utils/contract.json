@@ -1,0 +1,118 @@
+{
+  "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+  "abi": [
+    {
+      "inputs": [{ "internalType": "address", "name": "_pcbVault", "type": "address" }],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    { "inputs": [], "name": "ReentrancyGuardReentrantCall", "type": "error" },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+        { "indexed": false, "internalType": "uint256", "name": "price", "type": "uint256" }
+      ],
+      "name": "TicketListed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+        { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "price", "type": "uint256" },
+        { "indexed": false, "internalType": "string", "name": "matchDetails", "type": "string" }
+      ],
+      "name": "TicketMinted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+        { "indexed": true, "internalType": "address", "name": "seller", "type": "address" },
+        { "indexed": true, "internalType": "address", "name": "buyer", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "price", "type": "uint256" }
+      ],
+      "name": "TicketSold",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "PRICE_CAP_PERCENT",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ROYALTY_PERCENT",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "uint256", "name": "tokenId", "type": "uint256" }],
+      "name": "buyTicket",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "uint256", "name": "tokenId", "type": "uint256" }],
+      "name": "getTicket",
+      "outputs": [
+        {
+          "components": [
+            { "internalType": "uint256", "name": "originalPrice", "type": "uint256" },
+            { "internalType": "uint256", "name": "currentPrice", "type": "uint256" },
+            { "internalType": "bool", "name": "isForSale", "type": "bool" },
+            { "internalType": "string", "name": "matchDetails", "type": "string" }
+          ],
+          "internalType": "struct ChainPass.Ticket",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+        { "internalType": "uint256", "name": "price", "type": "uint256" }
+      ],
+      "name": "listTicket",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "to", "type": "address" },
+        { "internalType": "string", "name": "uri", "type": "string" },
+        { "internalType": "uint256", "name": "price", "type": "uint256" },
+        { "internalType": "string", "name": "matchDetails", "type": "string" }
+      ],
+      "name": "mintTicket",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ownerOf",
+      "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalSupply",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+}
