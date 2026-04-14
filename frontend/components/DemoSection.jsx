@@ -12,7 +12,7 @@ function makeQRPattern(seed) {
   return cells;
 }
 
-function QRCode({ id, match, seat }) {
+function QRCode({ id, match, enclosure }) {
   const { account, contract } = useWeb3();
   // FIXED HYDRATION ERROR: Use a deterministic seed initially so SSR matches Client
   const [cells, setCells] = useState(() => makeQRPattern(id * 12345));
@@ -66,7 +66,7 @@ function QRCode({ id, match, seat }) {
       </div>
       <div style={{ flex: 1 }}>
         <div style={styles.match}>{match}</div>
-        <div style={styles.seat}>{seat}</div>
+        <div style={styles.seat}>{enclosure}</div>
         <div style={styles.timerText}>
           {signed ? `SECURE_TOKEN: ACTIVE (${timer}s)` : 'TOKEN_EXPIRED (RE-SIGN)'}
         </div>
@@ -184,8 +184,8 @@ export default function DemoSection() {
             DYNAMIC_QR_DEMO — Live refreshing every 30 seconds
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <QRCode id={1} match="KK vs LQ — 18 APR 2026" seat="UPPER_TIER_A · ROW_12 · SEAT_44" />
-            <QRCode id={2} match="PZ vs QG — 21 APR 2026" seat="LOWER_TIER_B · ROW_5 · SEAT_18" />
+            <QRCode id={1} match="KK vs LQ — 18 APR 2026" enclosure="UPPER_TIER_A" />
+            <QRCode id={2} match="PZ vs QG — 21 APR 2026" enclosure="LOWER_TIER_B" />
           </div>
         </div>
       </div>

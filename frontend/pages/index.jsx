@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import Ticker from '../components/Ticker';
-import Terminal from '../components/Terminal';
+import MintForm from '../components/MintForm';
 import StatsBand from '../components/StatsBand';
 import FeaturesSection from '../components/FeaturesSection';
 import HowItWorks from '../components/HowItWorks';
@@ -50,7 +50,6 @@ export default function Home() {
               </p>
 
               <div style={styles.heroActions}>
-                <Link href="/marketplace" className="nav-cta">BROWSE_TICKETS →</Link>
                 <Link href="/docs" className="nav-cta nav-cta--dark">VIEW_CONTRACT ↗</Link>
               </div>
 
@@ -77,7 +76,7 @@ export default function Home() {
             </div>
 
             <div style={styles.heroRight}>
-              <Terminal />
+              <MintForm />
             </div>
           </section>
 

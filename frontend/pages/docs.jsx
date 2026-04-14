@@ -3,6 +3,8 @@ import Navbar from '../components/Navbar';
 import Ticker from '../components/Ticker';
 
 export default function Docs() {
+  const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || 'Not configured';
+
   const sections = [
     {
       tag: '01',
@@ -49,7 +51,7 @@ export default function Docs() {
               </ul>
               <div style={styles.contractBox}>
                 <div style={styles.detLabel}>CONTRACT_ADDRESS</div>
-                <div style={styles.address}>0xDc64a14...CF6C9</div>
+                <div style={styles.address}>{contractAddress}</div>
               </div>
             </aside>
 
@@ -74,8 +76,8 @@ export default function Docs() {
               <div style={styles.footerInfo}>
                 <div style={styles.infoHex}>i</div>
                 <p style={styles.footerText}>
-                  This system is currently running on the <strong>Hardhat Local Network</strong> for demonstration. 
-                  In production, this would be deployed on a scalable L2 like <strong>Polygon</strong> or <strong>Arbitrum</strong>.
+                  This system is configured for <strong>WireFluid Testnet</strong> (Chain ID: <strong>92533</strong>) 
+                  using RPC <strong>https://evm.wirefluid.com</strong>.
                 </p>
               </div>
             </section>
