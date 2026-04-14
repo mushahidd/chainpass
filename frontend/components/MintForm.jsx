@@ -10,7 +10,6 @@ export default function MintForm() {
   const [form, setForm] = useState({
     matchId: '',
     enclosure: '',
-    seatNumber: '',
     cnic: ''
   });
   
@@ -36,19 +35,36 @@ export default function MintForm() {
         for (let i = 0; i < Number(count); i++) {
           const matchData = await contract.matches(i);
           if (matchData.isActive) {
+            const [enclosureNames, enclosurePrices, enclosureCapacities, enclosureMinted] = await contract.getMatchEnclosures(i);
+            const enclosures = enclosureNames.map((name, idx) => ({
+              name,
+              price: enclosurePrices[idx],
+              capacity: enclosureCapacities[idx],
+              minted: enclosureMinted[idx]
+            }));
+
             activeMatches.push({
               id: i,
               teams: matchData.teams,
               stadium: matchData.stadium,
-              price: matchData.price,
               maxCapacity: matchData.maxCapacity,
-              currentMinted: matchData.currentMinted
+              currentMinted: matchData.currentMinted,
+              enclosures
             });
           }
         }
         setMatches(activeMatches);
         if (activeMatches.length > 0) {
-          setForm(prev => ({ ...prev, matchId: activeMatches[0].id.toString() }));
+          const firstMatch = activeMatches[0];
+          const firstAvailable = firstMatch.enclosures.find(
+            (enc) => Number(enc.minted) < Number(enc.capacity)
+          );
+
+          setForm(prev => ({
+            ...prev,
+            matchId: firstMatch.id.toString(),
+            enclosure: firstAvailable ? firstAvailable.name : ''
+          }));
         }
       } catch (err) {
         console.error("Failed to fetch matches", err);
@@ -60,7 +76,23 @@ export default function MintForm() {
   }, [contract, web3Error]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === 'matchId') {
+      const selected = matches.find((m) => m.id.toString() === value);
+      const firstAvailable = selected?.enclosures.find(
+        (enc) => Number(enc.minted) < Number(enc.capacity)
+      );
+
+      setForm((prev) => ({
+        ...prev,
+        matchId: value,
+        enclosure: firstAvailable ? firstAvailable.name : ''
+      }));
+      return;
+    }
+
+    setForm({ ...form, [name]: value });
   };
 
   const handleMint = async (e) => {
@@ -71,7 +103,7 @@ export default function MintForm() {
     if (web3Error) return setError(web3Error);
     if (!account) return setError("Please connect your wallet first.");
     if (!contract) return setError("Contract connection is not ready.");
-    if (!form.matchId || !form.enclosure || !form.seatNumber || !form.cnic) {
+    if (!form.matchId || !form.enclosure || !form.cnic) {
       return setError("Please fill all fields.");
     }
 
@@ -86,29 +118,33 @@ export default function MintForm() {
       // PRIVACY PRESERVING LOCALLY HASHED CNIC
       const cnicHash = ethers.id(form.cnic);
       const selectedMatch = matches.find(m => m.id.toString() === form.matchId);
+      const selectedEnclosure = selectedMatch?.enclosures.find((enc) => enc.name === form.enclosure);
 
       if (!selectedMatch) {
         throw new Error('Selected match not found on current chain state.');
+      }
+
+      if (!selectedEnclosure) {
+        throw new Error('Selected enclosure is invalid for this match.');
       }
       
       const tx = await contract.mintTicket(
         form.matchId,
         form.enclosure,
-        form.seatNumber,
         cnicHash,
         "ipfs://QmDefaultHashTicketURI",
-        { value: selectedMatch.price }
+        { value: selectedEnclosure.price }
       );
       
       await tx.wait();
       setSuccess("TICKET SECURED. Proceed to 'My Tickets' vault.");
-      setForm({ ...form, seatNumber: '', cnic: '' }); // clear sensitive data
+      setForm({ ...form, cnic: '' }); // clear sensitive data
     } catch (err) {
       console.error(err);
-      if (err.message.includes("SeatAlreadyTaken") || err.message.includes("reverted with custom error 'SeatAlreadyTaken()'")) {
-        setError("Seat unavailable, please pick another.");
+      if (err.message.includes("EnclosureSoldOut")) {
+        setError("Selected enclosure is sold out. Choose another.");
       } else if (err.message.includes("WalletLimitReached")) {
-        setError("You can only mint a maximum of 2 tickets for this match.");
+        setError("You can only mint a maximum of 5 tickets for this match.");
       } else {
         setError("Transaction failed. Check console or wallet limit.");
       }
@@ -143,22 +179,40 @@ export default function MintForm() {
             <select name="matchId" value={form.matchId} onChange={handleChange} style={styles.input}>
               {matches.map(m => (
                 <option key={m.id} value={m.id}>
-                  {m.teams} ({ethers.formatEther(m.price)} ETH)
+                  {m.teams} ({m.currentMinted.toString()}/{m.maxCapacity.toString()} minted)
                 </option>
               ))}
             </select>
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <div style={{ ...styles.inputGroup, flex: 2 }}>
-            <label style={styles.label}>ENCLOSURE</label>
-            <input required name="enclosure" value={form.enclosure} onChange={handleChange} style={styles.input} placeholder="e.g. Imran Khan Enclosure" />
-          </div>
-          <div style={{ ...styles.inputGroup, flex: 1 }}>
-            <label style={styles.label}>SEAT_NO</label>
-            <input required type="number" name="seatNumber" value={form.seatNumber} onChange={handleChange} style={styles.input} placeholder="1" />
-          </div>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>SELECT_ENCLOSURE</label>
+          {(() => {
+            const selectedMatch = matches.find((m) => m.id.toString() === form.matchId);
+            if (!selectedMatch) return <div style={styles.input}>Select a match first.</div>;
+
+            const available = selectedMatch.enclosures.filter(
+              (enc) => Number(enc.minted) < Number(enc.capacity)
+            );
+
+            if (!available.length) {
+              return <div style={{ ...styles.input, ...styles.warnInline }}>All enclosures sold out for this match.</div>;
+            }
+
+            return (
+              <select name="enclosure" value={form.enclosure} onChange={handleChange} style={styles.input}>
+                {available.map((enc) => {
+                  const remaining = Number(enc.capacity) - Number(enc.minted);
+                  return (
+                    <option key={enc.name} value={enc.name}>
+                      {enc.name} - {ethers.formatEther(enc.price)} ETH ({remaining} left)
+                    </option>
+                  );
+                })}
+              </select>
+            );
+          })()}
         </div>
 
         <div style={styles.inputGroup}>

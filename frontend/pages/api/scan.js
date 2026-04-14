@@ -1,21 +1,29 @@
 import { ethers } from 'ethers';
+import contractInfo from '../../utils/contractData.json';
 
 const QR_TTL_SECONDS = 30;
 
 const ABI = [
-  "function getTicketData(uint256 tokenId) view returns (address owner, tuple(uint256 matchId, string enclosure, uint256 seatNumber, bytes32 cnicHash, bool isUsed) ticketObj, tuple(string teams, string stadium, uint256 price, uint256 maxCapacity, uint256 currentMinted, bool isActive) matchObj)",
+  "function getTicketData(uint256 tokenId) view returns (address owner, tuple(uint256 matchId, string enclosure, uint256 paidPrice, bytes32 cnicHash, bool isUsed) ticketObj, tuple(string teams, string stadium, uint256 maxCapacity, uint256 currentMinted, bool isActive) matchObj)",
   "function markTicketAsUsed(uint256 tokenId)",
   "function ownerOf(uint256 tokenId) view returns (address)"
 ];
 
-// Provide defaults for local testing if env vars are missing
-const RPC_URL = process.env.WIREFLUID_RPC_URL || "http://127.0.0.1:8545";
-const SCANNER_PK = process.env.SCANNER_PRIVATE_KEY || "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"; // hardhat #0
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707";
+const RPC_URL = process.env.WIREFLUID_RPC_URL || "https://evm.wirefluid.com";
+const SCANNER_PK = process.env.SCANNER_PRIVATE_KEY;
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || contractInfo.address;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  if (!SCANNER_PK) {
+    return res.status(500).json({ valid: false, message: 'SCANNER_PRIVATE_KEY_NOT_CONFIGURED' });
+  }
+
+  if (!CONTRACT_ADDRESS) {
+    return res.status(500).json({ valid: false, message: 'NEXT_PUBLIC_CONTRACT_ADDRESS_NOT_CONFIGURED' });
   }
 
   try {
@@ -72,7 +80,7 @@ export default async function handler(req, res) {
     await tx.wait();
 
     // 9. Format Success Return string with precise routing
-    const routingStr = `${matchInfo.teams}|${matchInfo.stadium}|${ticketInfo.enclosure} - SEAT NO. ${ticketInfo.seatNumber}`;
+    const routingStr = `${matchInfo.teams}|${matchInfo.stadium}|ENCLOSURE: ${ticketInfo.enclosure}`;
 
     return res.status(200).json({ valid: true, message: routingStr, txHash: tx.hash });
 

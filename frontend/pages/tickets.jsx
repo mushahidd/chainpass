@@ -135,11 +135,10 @@ export default function MyTickets() {
           const [ownerAddr, t, m] = await contract.getTicketData(i);
           myItems.push({
             id: i,
-            originalPrice: ethers.formatEther(m.price),
+            originalPrice: ethers.formatEther(t.paidPrice),
             matchDetails: m.teams,
             stadium: m.stadium,
             enclosure: t.enclosure,
-            seatNumber: t.seatNumber.toString(),
             isUsed: t.isUsed,
           });
         }
@@ -191,7 +190,7 @@ export default function MyTickets() {
                     <div style={styles.info}>
                       <span style={styles.tokenId}>#NFT_{t.id.toString().padStart(3, '0')}</span>
                       <h3 style={styles.matchTitle}>{t.matchDetails}</h3>
-                      <p style={styles.seatInfo}>{t.stadium} · {t.enclosure} · SEAT_NO: {t.seatNumber}</p>
+                      <p style={styles.seatInfo}>{t.stadium} · ENCLOSURE: {t.enclosure}</p>
                       
                       <div style={styles.details}>
                         <div style={styles.detRow}>

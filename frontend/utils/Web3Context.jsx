@@ -3,7 +3,9 @@ import { ethers } from 'ethers';
 import contractInfo from './contractData.json';
 
 const Web3Context = createContext();
-const EXPECTED_CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337);
+const EXPECTED_CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 92533);
+const NETWORK_LABEL = process.env.NEXT_PUBLIC_NETWORK_NAME || 'WireFluid Testnet';
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || contractInfo.address;
 
 export function Web3Provider({ children }) {
   const [account, setAccount] = useState(null);
@@ -50,23 +52,23 @@ export function Web3Provider({ children }) {
       if (activeChainId !== EXPECTED_CHAIN_ID) {
         setContract(null);
         setWeb3Error(
-          `Wrong network: expected chain ${EXPECTED_CHAIN_ID} (Hardhat Local), but wallet is on chain ${activeChainId}.`
+          `Wrong network: expected chain ${EXPECTED_CHAIN_ID} (${NETWORK_LABEL}), but wallet is on chain ${activeChainId}.`
         );
         return;
       }
 
-      const code = await browserProvider.getCode(contractInfo.address);
+      const code = await browserProvider.getCode(CONTRACT_ADDRESS);
       if (code === '0x') {
         setContract(null);
         setWeb3Error(
-          `Contract not found at ${contractInfo.address} on chain ${activeChainId}. Run initialization on localhost.`
+          `Contract not found at ${CONTRACT_ADDRESS} on chain ${activeChainId}. Deploy and initialize on ${NETWORK_LABEL}.`
         );
         return;
       }
 
       const signer = await browserProvider.getSigner();
       const chainPassContract = new ethers.Contract(
-        contractInfo.address,
+        CONTRACT_ADDRESS,
         contractInfo.abi,
         signer
       );

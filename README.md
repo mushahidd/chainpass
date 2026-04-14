@@ -66,18 +66,19 @@ npm install
 npx hardhat compile
 ```
 
-To deploy to a local node:
+To deploy to WireFluid testnet:
 
 ```bash
-npx hardhat node
+cd smart-contracts
+npm run deploy:wirefluid
+npm run initialize:wirefluid
 ```
 
-In another terminal:
-
-```bash
-npx hardhat run scripts/deploy.js --network localhost
-npx hardhat run scripts/initializeMatches.js --network localhost
-```
+WireFluid testnet settings:
+- RPC: `https://evm.wirefluid.com`
+- Chain ID: `92533`
+- Explorer: `wirefluidscan.com`
+- Token: Test WIRE
 
 ## Core Flows
 
@@ -108,11 +109,12 @@ Frontend:
 Smart contracts:
 - `npm run compile`
 - `npm run test`
-- `npm run deploy:local`
+- `npm run deploy:wirefluid`
+- `npm run initialize:wirefluid`
 
 ## Current Status
 
-- Working end-to-end local demo architecture
+- Working end-to-end on WireFluid testnet configuration
 - Frontend and contract are integrated
 - UI heavily customized to project theme
 

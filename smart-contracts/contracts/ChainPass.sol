@@ -10,9 +10,12 @@ error TicketAlreadyUsed();
 error NotAuthorizedScanner();
 error MatchNotActive();
 error WalletLimitReached();
-error SeatAlreadyTaken();
 error IncorrectPayment();
 error MatchSoldOut();
+error InvalidEnclosureConfig();
+error DuplicateEnclosure();
+error EnclosureNotFound();
+error EnclosureSoldOut();
 
 /**
  * @title ChainPass PSL
@@ -21,20 +24,27 @@ error MatchSoldOut();
 contract ChainPass is ERC721URIStorage, Ownable {
     uint256 public nextMatchId;
     uint256 private _nextTokenId;
+    uint8 public constant MAX_TICKETS_PER_WALLET = 5;
 
     struct Match {
         string teams;
         string stadium;
-        uint256 price;
         uint256 maxCapacity;
         uint256 currentMinted;
         bool isActive;
     }
 
+    struct Enclosure {
+        uint256 price;
+        uint256 capacity;
+        uint256 currentMinted;
+        bool exists;
+    }
+
     struct Ticket {
         uint256 matchId;
         string enclosure;
-        uint256 seatNumber;
+        uint256 paidPrice;
         bytes32 cnicHash;
         bool isUsed;
     }
@@ -42,15 +52,15 @@ contract ChainPass is ERC721URIStorage, Ownable {
     // --- State Mappings ---
     mapping(uint256 => Match) public matches;
     mapping(uint256 => Ticket) public tickets;
+    mapping(uint256 => string[]) private _matchEnclosureNames;
+    mapping(uint256 => mapping(bytes32 => Enclosure)) private _matchEnclosures;
 
-    // matchId -> wallet -> count (Max 2)
+    // matchId -> wallet -> count (Max 5)
     mapping(uint256 => mapping(address => uint8)) public matchWalletMintCount;
-    // matchId -> enclosure -> seatNumber -> isTaken (Double-booking prevention)
-    mapping(uint256 => mapping(string => mapping(uint256 => bool))) public isSeatTaken;
 
     mapping(address => bool) public scanners;
 
-    event MatchCreated(uint256 indexed matchId, string teams, string stadium, uint256 price);
+    event MatchCreated(uint256 indexed matchId, string teams, string stadium, uint256 totalCapacity);
     event TicketMinted(uint256 indexed tokenId, uint256 indexed matchId, address owner, bytes32 cnicHash);
     event TicketScanned(uint256 indexed tokenId, address indexed scanner);
 
@@ -67,16 +77,61 @@ contract ChainPass is ERC721URIStorage, Ownable {
         scanners[scanner] = status;
     }
 
-    function createMatch(string memory teams, string memory stadium, uint256 price, uint256 maxCapacity) public onlyOwner {
+    function createMatch(
+        string memory teams,
+        string memory stadium,
+        string[] memory enclosureNames,
+        uint256[] memory enclosurePrices,
+        uint256[] memory enclosureCapacities
+    ) public onlyOwner {
+        if (
+            enclosureNames.length == 0 ||
+            enclosureNames.length != enclosurePrices.length ||
+            enclosureNames.length != enclosureCapacities.length
+        ) {
+            revert InvalidEnclosureConfig();
+        }
+
+        uint256 totalCapacity;
+        uint256 matchId = nextMatchId;
+
+        for (uint256 i = 0; i < enclosureNames.length; i++) {
+            string memory enclosureName = enclosureNames[i];
+            uint256 enclosurePrice = enclosurePrices[i];
+            uint256 enclosureCapacity = enclosureCapacities[i];
+
+            if (
+                bytes(enclosureName).length == 0 ||
+                enclosurePrice == 0 ||
+                enclosureCapacity == 0
+            ) {
+                revert InvalidEnclosureConfig();
+            }
+
+            bytes32 enclosureKey = keccak256(bytes(enclosureName));
+            if (_matchEnclosures[matchId][enclosureKey].exists) {
+                revert DuplicateEnclosure();
+            }
+
+            _matchEnclosures[matchId][enclosureKey] = Enclosure({
+                price: enclosurePrice,
+                capacity: enclosureCapacity,
+                currentMinted: 0,
+                exists: true
+            });
+
+            _matchEnclosureNames[matchId].push(enclosureName);
+            totalCapacity += enclosureCapacity;
+        }
+
         matches[nextMatchId] = Match({
             teams: teams,
             stadium: stadium,
-            price: price,
-            maxCapacity: maxCapacity,
+            maxCapacity: totalCapacity,
             currentMinted: 0,
             isActive: true
         });
-        emit MatchCreated(nextMatchId, teams, stadium, price);
+        emit MatchCreated(nextMatchId, teams, stadium, totalCapacity);
         nextMatchId++;
     }
 
@@ -92,22 +147,24 @@ contract ChainPass is ERC721URIStorage, Ownable {
     function mintTicket(
         uint256 _matchId,
         string memory _enclosure,
-        uint256 _seatNumber,
         bytes32 _cnicHash,
         string memory _uri
     ) public payable {
         Match storage evData = matches[_matchId];
+        bytes32 enclosureKey = keccak256(bytes(_enclosure));
+        Enclosure storage enclosureObj = _matchEnclosures[_matchId][enclosureKey];
         
         if (!evData.isActive) revert MatchNotActive();
         if (evData.currentMinted >= evData.maxCapacity) revert MatchSoldOut();
-        if (msg.value != evData.price) revert IncorrectPayment();
-        if (matchWalletMintCount[_matchId][msg.sender] >= 2) revert WalletLimitReached();
-        if (isSeatTaken[_matchId][_enclosure][_seatNumber]) revert SeatAlreadyTaken();
+        if (!enclosureObj.exists) revert EnclosureNotFound();
+        if (enclosureObj.currentMinted >= enclosureObj.capacity) revert EnclosureSoldOut();
+        if (msg.value != enclosureObj.price) revert IncorrectPayment();
+        if (matchWalletMintCount[_matchId][msg.sender] >= MAX_TICKETS_PER_WALLET) revert WalletLimitReached();
 
         // Register constraints BEFORE mint
-        isSeatTaken[_matchId][_enclosure][_seatNumber] = true;
         matchWalletMintCount[_matchId][msg.sender]++;
         evData.currentMinted++;
+        enclosureObj.currentMinted++;
 
         uint256 tokenId = _nextTokenId++;
         _safeMint(msg.sender, tokenId);
@@ -116,7 +173,7 @@ contract ChainPass is ERC721URIStorage, Ownable {
         tickets[tokenId] = Ticket({
             matchId: _matchId,
             enclosure: _enclosure,
-            seatNumber: _seatNumber,
+            paidPrice: enclosureObj.price,
             cnicHash: _cnicHash,
             isUsed: false
         });
@@ -137,6 +194,45 @@ contract ChainPass is ERC721URIStorage, Ownable {
 
     function getMatchCount() public view returns (uint256) {
         return nextMatchId;
+    }
+
+    function getMatchEnclosures(uint256 matchId) public view returns (
+        string[] memory enclosureNames,
+        uint256[] memory enclosurePrices,
+        uint256[] memory enclosureCapacities,
+        uint256[] memory enclosureMinted
+    ) {
+        string[] storage storedNames = _matchEnclosureNames[matchId];
+        uint256 len = storedNames.length;
+
+        enclosureNames = new string[](len);
+        enclosurePrices = new uint256[](len);
+        enclosureCapacities = new uint256[](len);
+        enclosureMinted = new uint256[](len);
+
+        for (uint256 i = 0; i < len; i++) {
+            string memory enclosureName = storedNames[i];
+            Enclosure storage enclosureObj = _matchEnclosures[matchId][keccak256(bytes(enclosureName))];
+            enclosureNames[i] = enclosureName;
+            enclosurePrices[i] = enclosureObj.price;
+            enclosureCapacities[i] = enclosureObj.capacity;
+            enclosureMinted[i] = enclosureObj.currentMinted;
+        }
+    }
+
+    function getEnclosureDetails(uint256 matchId, string memory enclosure) public view returns (
+        uint256 price,
+        uint256 capacity,
+        uint256 currentMinted,
+        bool exists
+    ) {
+        Enclosure storage enclosureObj = _matchEnclosures[matchId][keccak256(bytes(enclosure))];
+        return (
+            enclosureObj.price,
+            enclosureObj.capacity,
+            enclosureObj.currentMinted,
+            enclosureObj.exists
+        );
     }
 
     function getTicketData(uint256 tokenId) public view returns (

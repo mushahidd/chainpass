@@ -1,8 +1,21 @@
 const hre = require("hardhat");
+const fs = require("fs");
+const path = require("path");
+
+function upsertEnvVar(envData, key, value) {
+  const escaped = String(value).replace(/\\/g, "\\\\").replace(/\"/g, "\\\"");
+  const line = `${key}="${escaped}"`;
+
+  if (new RegExp(`^${key}=.*$`, "m").test(envData)) {
+    return envData.replace(new RegExp(`^${key}=.*$`, "m"), line);
+  }
+
+  return `${envData.trimEnd()}\n${line}\n`;
+}
 
 async function main() {
-  if (hre.network.name === 'hardhat') {
-    throw new Error("Refusing to initialize on transient 'hardhat' network. Use --network localhost or npm run initialize:local.");
+  if (hre.network.name !== "wirefluid") {
+    throw new Error("This initializer is locked to WireFluid. Use --network wirefluid or npm run initialize:wirefluid.");
   }
 
   const [deployer] = await hre.ethers.getSigners();
@@ -30,8 +43,13 @@ async function main() {
   tx = await chainpass.createMatch(
     "Karachi Kings vs Lahore Qalandars",
     "National Stadium Karachi",
-    hre.ethers.parseEther("0.01"), // keep it cheap for demo
-    50000
+    ["General", "Premium", "VIP"],
+    [
+      hre.ethers.parseEther("0.01"),
+      hre.ethers.parseEther("0.02"),
+      hre.ethers.parseEther("0.05")
+    ],
+    [35000, 12000, 3000]
   );
   await tx.wait();
   console.log("-> Match Created: KK vs LQ at National Stadium");
@@ -40,8 +58,13 @@ async function main() {
   tx = await chainpass.createMatch(
     "Islamabad United vs Multan Sultans",
     "Rawalpindi Cricket Stadium",
-    hre.ethers.parseEther("0.01"),
-    30000
+    ["General", "Family", "VIP"],
+    [
+      hre.ethers.parseEther("0.008"),
+      hre.ethers.parseEther("0.015"),
+      hre.ethers.parseEther("0.04")
+    ],
+    [18000, 9000, 3000]
   );
   await tx.wait();
   console.log("-> Match Created: IU vs MS at Rawalpindi");
@@ -50,15 +73,18 @@ async function main() {
   tx = await chainpass.createMatch(
     "PSL GRAND FINAL",
     "Gaddafi Stadium Lahore",
-    hre.ethers.parseEther("0.02"),
-    60000
+    ["General", "Premium", "Hospitality"],
+    [
+      hre.ethers.parseEther("0.02"),
+      hre.ethers.parseEther("0.04"),
+      hre.ethers.parseEther("0.08")
+    ],
+    [42000, 13000, 5000]
   );
   await tx.wait();
   console.log("-> Match Created: PSL GRAND FINAL at Gaddafi Stadium");
 
   // Write contract.json dynamically
-  const fs = require('fs');
-  const path = require('path');
   const artifactPath = path.join(__dirname, "../artifacts/contracts/ChainPass.sol/ChainPass.json");
   const artifact = require(artifactPath);
   
@@ -74,7 +100,15 @@ async function main() {
   const envPath = path.join(__dirname, "../../frontend/.env.local");
   try {
     let envData = fs.readFileSync(envPath, 'utf8');
-    envData = envData.replace(/NEXT_PUBLIC_CONTRACT_ADDRESS=.*/, `NEXT_PUBLIC_CONTRACT_ADDRESS="${address}"`);
+    envData = upsertEnvVar(envData, "WIREFLUID_RPC_URL", hre.network.config.url || "https://evm.wirefluid.com");
+    envData = upsertEnvVar(envData, "NEXT_PUBLIC_CHAIN_ID", 92533);
+    envData = upsertEnvVar(envData, "NEXT_PUBLIC_NETWORK_NAME", "WireFluid Testnet");
+    envData = upsertEnvVar(envData, "NEXT_PUBLIC_CONTRACT_ADDRESS", address);
+
+    if (process.env.PRIVATE_KEY) {
+      envData = upsertEnvVar(envData, "SCANNER_PRIVATE_KEY", process.env.PRIVATE_KEY);
+    }
+
     fs.writeFileSync(envPath, envData);
   } catch (e) {
     console.log("Could not auto-update .env.local:", e.message);
@@ -83,7 +117,7 @@ async function main() {
   console.log("----------------------------------------------------");
   console.log("DEPLOYMENT COMPLETE");
   console.log("-> Automatically updated frontend/utils/contractData.json with ABI & Address:", address);
-  console.log("-> Automatically updated frontend/.env.local with new address");
+  console.log("-> Automatically updated frontend/.env.local with WireFluid network config and address");
   console.log("----------------------------------------------------");
 }
 

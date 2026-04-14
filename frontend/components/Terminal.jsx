@@ -13,7 +13,7 @@ const TERM_LINES = [
   [{ cls: 'dim', t: '> ' }, { cls: 'g', t: 'Contract deployed ✓' }],
   [{ cls: 'dim', t: '> ' }, { cls: 'w', t: 'Address: ' }, { cls: 'g', t: '0x4f2a...b81c' }],
   [{ cls: 'sep', t: '————————————————————————' }],
-  [{ cls: 'dim', t: '$ ' }, { cls: 'g', t: 'mint ' }, { cls: 'w', t: '--match KK_vs_LQ --seat A12' }],
+  [{ cls: 'dim', t: '$ ' }, { cls: 'g', t: 'mint ' }, { cls: 'w', t: '--match KK_vs_LQ --enclosure VIP' }],
   [{ cls: 'dim', t: '> ' }, { cls: 'g', t: 'NFT #10241 minted ✓' }],
   [{ cls: 'dim', t: '> ' }, { cls: 'w', t: 'Owner: ' }, { cls: 'gold', t: '0x9a3f...d44e' }],
   [{ cls: 'dim', t: '$ ' }, { cls: 'cursor', t: '' }],

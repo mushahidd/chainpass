@@ -13,8 +13,9 @@ export default function AdminDashboard() {
   const [form, setForm] = useState({
     teams: '',
     stadium: '',
-    price: '0.01',
-    maxCapacity: '50000'
+    enclosures: [
+      { name: 'General', price: '0.01', capacity: '30000' }
+    ]
   });
   
   const [creating, setCreating] = useState(false);
@@ -57,30 +58,83 @@ export default function AdminDashboard() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleEnclosureChange = (index, field, value) => {
+    setForm((prev) => {
+      const next = [...prev.enclosures];
+      next[index] = { ...next[index], [field]: value };
+      return { ...prev, enclosures: next };
+    });
+  };
+
+  const addEnclosureRow = () => {
+    setForm((prev) => ({
+      ...prev,
+      enclosures: [...prev.enclosures, { name: '', price: '0.01', capacity: '1000' }]
+    }));
+  };
+
+  const removeEnclosureRow = (index) => {
+    setForm((prev) => {
+      if (prev.enclosures.length <= 1) return prev;
+      const next = prev.enclosures.filter((_, i) => i !== index);
+      return { ...prev, enclosures: next };
+    });
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!form.teams || !form.stadium) return alert('Fill all required fields!');
+    if (!form.enclosures.length) return alert('Add at least one enclosure.');
     if (!contract) return alert('Contract is unavailable on the active wallet network.');
     if (!isOwner) return alert('Only the contract owner can initialize matches.');
 
     setCreating(true);
     try {
-      const priceWei = ethers.parseEther(form.price.toString());
+      const sanitizedEnclosures = form.enclosures.map((enc) => ({
+        name: enc.name.trim(),
+        price: enc.price,
+        capacity: enc.capacity
+      }));
+
+      if (sanitizedEnclosures.some((enc) => !enc.name)) {
+        throw new Error('Each enclosure must have a non-empty name.');
+      }
+
+      if (sanitizedEnclosures.some((enc) => Number(enc.price) <= 0)) {
+        throw new Error('Each enclosure must have a price greater than zero.');
+      }
+
+      if (sanitizedEnclosures.some((enc) => !/^[1-9]\d*$/.test(String(enc.capacity)))) {
+        throw new Error('Each enclosure capacity must be a positive whole number.');
+      }
+
+      const lowered = sanitizedEnclosures.map((enc) => enc.name.toLowerCase());
+      if (new Set(lowered).size !== lowered.length) {
+        throw new Error('Duplicate enclosure names are not allowed.');
+      }
+
+      const enclosureNames = sanitizedEnclosures.map((enc) => enc.name);
+      const enclosurePrices = sanitizedEnclosures.map((enc) => ethers.parseEther(enc.price.toString()));
+      const enclosureCapacities = sanitizedEnclosures.map((enc) => BigInt(enc.capacity));
       
-      // Call createMatch from the smart contract!
       const tx = await contract.createMatch(
         form.teams, 
         form.stadium, 
-        priceWei, 
-        form.maxCapacity
+        enclosureNames,
+        enclosurePrices,
+        enclosureCapacities
       );
       await tx.wait();
       
       alert(`SUCCESS: Active Match Initialized For: ${form.teams}`);
-      setForm({ teams: '', stadium: '', price: '0.01', maxCapacity: '50000' });
+      setForm({
+        teams: '',
+        stadium: '',
+        enclosures: [{ name: 'General', price: '0.01', capacity: '30000' }]
+      });
     } catch (err) {
       console.error("Match Admin failed:", err);
-      alert("FAILED to initialize match. Check console.");
+      alert(err?.message || "FAILED to initialize match. Check console.");
     } finally {
       setCreating(false);
     }
@@ -143,15 +197,51 @@ export default function AdminDashboard() {
                      <input required name="stadium" value={form.stadium} onChange={handleChange} style={styles.input} placeholder="e.g. Bugti Stadium, Quetta" />
                    </div>
 
-                   <div style={{ display: 'flex', gap: '20px' }}>
-                     <div style={{...styles.inputGroup, flex: 1}}>
-                       <label style={styles.label}>TICKET_PRICE (ETH)</label>
-                       <input required type="number" step="0.001" name="price" value={form.price} onChange={handleChange} style={styles.input} />
+                   <div style={styles.enclosurePanel}>
+                     <div style={styles.enclosureHeaderRow}>
+                       <label style={styles.label}>ENCLOSURE_CONFIGURATION</label>
+                       <button type="button" onClick={addEnclosureRow} style={styles.ghostBtn}>+ ADD ENCLOSURE</button>
                      </div>
-                     <div style={{...styles.inputGroup, flex: 1}}>
-                       <label style={styles.label}>MAX_CAPACITY (SEATS)</label>
-                       <input required type="number" name="maxCapacity" value={form.maxCapacity} onChange={handleChange} style={styles.input} />
-                     </div>
+
+                     {form.enclosures.map((enc, idx) => (
+                       <div key={idx} style={styles.enclosureRow}>
+                         <input
+                           required
+                           value={enc.name}
+                           onChange={(e) => handleEnclosureChange(idx, 'name', e.target.value)}
+                           style={{ ...styles.input, ...styles.inlineInput, flex: 2 }}
+                           placeholder="ENCLOSURE NAME"
+                         />
+                         <input
+                           required
+                           type="number"
+                           min="0"
+                           step="0.001"
+                           value={enc.price}
+                           onChange={(e) => handleEnclosureChange(idx, 'price', e.target.value)}
+                           style={{ ...styles.input, ...styles.inlineInput, flex: 1 }}
+                           placeholder="PRICE ETH"
+                         />
+                         <input
+                           required
+                           type="number"
+                           min="1"
+                           step="1"
+                           value={enc.capacity}
+                           onChange={(e) => handleEnclosureChange(idx, 'capacity', e.target.value)}
+                           style={{ ...styles.input, ...styles.inlineInput, flex: 1 }}
+                           placeholder="CAPACITY"
+                         />
+                         <button
+                           type="button"
+                           onClick={() => removeEnclosureRow(idx)}
+                           style={styles.removeBtn}
+                           disabled={form.enclosures.length === 1}
+                         >
+                           REMOVE
+                         </button>
+                       </div>
+                     ))}
                    </div>
 
                    <button type="submit" disabled={creating} style={{...styles.btn, opacity: creating ? 0.5 : 1}}>
@@ -169,8 +259,8 @@ export default function AdminDashboard() {
                  </div>
                  <div style={styles.infoBox}>
                    <div style={styles.infoTag}>ARCHITECTURE</div>
-                   <div style={styles.infoVal}>EVENT_FACTORY</div>
-                   <div style={styles.infoDesc}>Matches you create here will immediately appear on the Public Fan Minting interface.</div>
+                   <div style={styles.infoVal}>ENCLOSURE_MATRIX</div>
+                   <div style={styles.infoDesc}>Define each enclosure's price and capacity per match. Fan minting options are derived strictly from this matrix.</div>
                  </div>
                </div>
              </div>
@@ -213,6 +303,19 @@ const styles = {
     background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border2)',
     color: 'var(--text)', fontFamily: 'var(--mono)', fontSize: '14px', padding: '16px',
     transition: 'border-color 0.2s', width: '100%', boxSizing: 'border-box'
+  },
+  enclosurePanel: { display: 'flex', flexDirection: 'column', gap: '12px', border: '1px solid var(--border)', padding: '16px' },
+  enclosureHeaderRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' },
+  enclosureRow: { display: 'flex', gap: '10px', alignItems: 'center' },
+  inlineInput: { padding: '12px' },
+  ghostBtn: {
+    border: '1px solid var(--g)', background: 'transparent', color: 'var(--g)',
+    fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '1px', padding: '8px 12px', cursor: 'pointer'
+  },
+  removeBtn: {
+    border: '1px solid var(--border2)', background: 'transparent', color: 'var(--muted)',
+    fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '1px', padding: '8px 10px', cursor: 'pointer',
+    opacity: 0.9
   },
   btn: {
     background: 'var(--g)', color: 'var(--bg)', border: 'none', padding: '20px',
