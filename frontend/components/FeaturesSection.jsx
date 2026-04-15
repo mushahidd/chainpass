@@ -16,7 +16,7 @@ const FEATURES = [
   {
     idx: 'C_02 //',
     title: 'DYNAMIC_QR_PROTOCOL',
-    desc: 'The QR code cryptographically regenerates every 30 seconds using the holder\'s private key signature. Screenshots are useless — the ticket expires the moment it is captured.',
+    desc: 'The QR code cryptographically regenerates every 60 seconds using the holder\'s private key signature. Screenshots are useless — the ticket expires the moment it is captured.',
     pill: 'ANTI_SCREENSHOT',
     icon: (
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--g)" strokeWidth="1.5" strokeLinecap="round">

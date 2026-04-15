@@ -6,7 +6,7 @@ import { useWeb3 } from '../utils/Web3Context';
 import { ethers } from 'ethers';
 import { QRCodeSVG } from 'qrcode.react';
 
-const QR_TTL_SECONDS = 30;
+const QR_TTL_SECONDS = 60;
 
 function DynamicQRCode({ ticket, account, provider }) {
   const [qrData, setQrData] = useState(null);
