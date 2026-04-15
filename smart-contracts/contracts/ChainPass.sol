@@ -158,17 +158,17 @@ contract ChainPass is ERC721URIStorage, Ownable {
         Enclosure storage enclosureObj = _matchEnclosures[_matchId][enclosureKey];
         
         if (!evData.isActive) revert MatchNotActive();
-        if (evData.currentMinted >= evData.maxCapacity) revert MatchSoldOut();
+        if (evData.currentMinted + _personCount > evData.maxCapacity) revert MatchSoldOut();
         if (!enclosureObj.exists) revert EnclosureNotFound();
-        if (enclosureObj.currentMinted >= enclosureObj.capacity) revert EnclosureSoldOut();
+        if (enclosureObj.currentMinted + _personCount > enclosureObj.capacity) revert EnclosureSoldOut();
         if (_personCount == 0 || _personCount > MAX_TICKETS_PER_WALLET) revert InvalidPersonCount();
         if (matchWalletMintCount[_matchId][msg.sender] != 0) revert WalletLimitReached();
         if (msg.value != enclosureObj.price * _personCount) revert IncorrectPayment();
 
         // Register constraints BEFORE mint
         matchWalletMintCount[_matchId][msg.sender] = uint8(_personCount);
-        evData.currentMinted++;
-        enclosureObj.currentMinted++;
+        evData.currentMinted += _personCount;
+        enclosureObj.currentMinted += _personCount;
 
         uint256 tokenId = _nextTokenId++;
         _safeMint(msg.sender, tokenId);

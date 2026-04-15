@@ -34,15 +34,16 @@ export default function Leaderboard() {
         const totalSupply = await contract.totalSupply();
 
         for (let tokenId = 0; tokenId < Number(totalSupply); tokenId++) {
-          const [owner, ticketObj] = await Promise.all([
-            contract.ownerOf(tokenId),
-            contract.getTicketData(tokenId),
-          ]);
+          const ticketData = await contract.getTicketData(tokenId);
+          const owner = (ticketData?.owner ?? ticketData?.[0] ?? '').toString();
+          const ticketObj = ticketData?.ticketObj ?? ticketData?.[1];
+
           const wallet = owner.toLowerCase();
           if (!wallet) continue;
 
           const current = tallies.get(wallet) || { wallet, count: 0 };
-          current.count += Number(ticketObj.personCount || 1);
+          const personCount = Number(ticketObj?.personCount ?? 1n);
+          current.count += personCount;
           tallies.set(wallet, current);
         }
 

@@ -190,7 +190,7 @@ export default function MintForm() {
             <select name="matchId" value={form.matchId} onChange={handleChange} style={styles.input}>
               {matches.map(m => (
                 <option key={m.id} value={m.id}>
-                  {m.teams} ({m.currentMinted.toString()}/{m.maxCapacity.toString()} minted)
+                  {m.teams} ({m.currentMinted.toString()}/{m.maxCapacity.toString()} seats)
                 </option>
               ))}
             </select>

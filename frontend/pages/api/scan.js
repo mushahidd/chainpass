@@ -5,7 +5,6 @@ const QR_TTL_SECONDS = 30;
 
 const ABI = [
   "function getTicketData(uint256 tokenId) view returns (address owner, tuple(uint256 matchId, string enclosure, uint256 personCount, uint256 paidPrice, bytes32 cnicHash, bool isUsed) ticketObj, tuple(string teams, string stadium, uint256 maxCapacity, uint256 currentMinted, bool isActive) matchObj)",
-  "function getEnclosureDetails(uint256 matchId, string enclosure) view returns (uint256 price, uint256 capacity, uint256 currentMinted, bool exists)",
   "function markTicketAsUsed(uint256 tokenId)",
   "function ownerOf(uint256 tokenId) view returns (address)"
 ];
@@ -28,7 +27,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { qrData, cnicHash } = req.body;
+    const { qrData, cnicHash, mode = 'use' } = req.body;
+    const normalizedMode = String(mode).toLowerCase();
+
+    if (normalizedMode !== 'verify' && normalizedMode !== 'use') {
+      return res.status(400).json({ valid: false, message: 'INVALID_SCAN_MODE' });
+    }
     
     // 1. Parse JSON
     const parsed = JSON.parse(qrData);
@@ -72,23 +76,45 @@ export default async function handler(req, res) {
     }
 
     // --- STEP 7: CNIC FRAUD PREVENTION HASH CHECK ---
-    if (ticketInfo.cnicHash !== cnicHash) {
+    if ((ticketInfo.cnicHash || '').toLowerCase() !== String(cnicHash || '').toLowerCase()) {
       return res.status(400).json({ valid: false, message: 'CNIC MISMATCH. PHYSICAL ID REJECTED.' });
     }
 
-    // 8. Execute State Change
+    const personCount = Number(ticketInfo.personCount ?? 1n);
+    const routingStr = `${matchInfo.teams}|${matchInfo.stadium}|ENCLOSURE: ${ticketInfo.enclosure}|PERSON_COUNT: ${personCount}`;
+
+    if (normalizedMode === 'verify') {
+      return res.status(200).json({
+        valid: true,
+        mode: 'verify',
+        tokenId: Number(p.tokenId),
+        personCount,
+        message: routingStr
+      });
+    }
+
+    // 8. Execute State Change only in USE mode
     const tx = await contract.markTicketAsUsed(p.tokenId);
     await tx.wait();
 
-    // 9. Format Success Return string with precise routing
-    const enclosureDetails = await contract.getEnclosureDetails(ticketInfo.matchId, ticketInfo.enclosure);
-    const personCount = enclosureDetails[0] > 0n ? Number(ticketInfo.paidPrice / enclosureDetails[0]) : 1;
-    const routingStr = `${matchInfo.teams}|${matchInfo.stadium}|ENCLOSURE: ${ticketInfo.enclosure}|PERSON_COUNT: ${personCount}`;
-
-    return res.status(200).json({ valid: true, message: routingStr, txHash: tx.hash });
+    // 9. Return final validation with consume tx hash
+    return res.status(200).json({
+      valid: true,
+      mode: 'use',
+      tokenId: Number(p.tokenId),
+      personCount,
+      message: routingStr,
+      txHash: tx.hash
+    });
 
   } catch (error) {
     console.error("Scan verification error:", error);
+
+    const errorText = String(error?.shortMessage || error?.message || '').toUpperCase();
+    if (errorText.includes('TICKETALREADYUSED') || errorText.includes('TICKET_ALREADY_USED')) {
+      return res.status(400).json({ valid: false, message: 'TICKET_ALREADY_USED' });
+    }
+
     return res.status(500).json({ valid: false, message: 'INTERNAL_ERROR_OR_TX_FAILED' });
   }
 }
