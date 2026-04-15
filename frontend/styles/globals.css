@@ -194,6 +194,7 @@ input {
 .nav-item--primary.nav-item-active {
   background: linear-gradient(180deg, #16ff7a 0%, #00df5d 100%);
   border-color: #20ff7f;
+  color: white;
 }
 
 .nav-item--secondary {
