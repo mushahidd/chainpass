@@ -28,8 +28,8 @@ export default function Home() {
           <Ticker />
 
           {/* HERO */}
-          <section style={styles.hero}>
-            <div style={styles.heroLeft}>
+          <section className="page-home-hero" style={styles.hero}>
+            <div className="page-home-hero-left" style={styles.heroLeft}>
               <div style={styles.eyebrow}>
                 <div style={styles.pulseDot} />
                 <span style={styles.eyebrowText}>SYS_READY: V26.0 // PSL_SEASON_2026</span>
@@ -52,7 +52,7 @@ export default function Home() {
                 <Link href="/docs" className="nav-cta nav-cta--dark">VIEW_CONTRACT ↗</Link>
               </div>
 
-              <div style={styles.badges}>
+              <div className="page-home-badges" style={styles.badges}>
                 {[
                   { label: 'POLYGON_MAINNET', gold: false },
                   { label: 'WEB3AUTH', gold: false },
@@ -74,8 +74,8 @@ export default function Home() {
               </div>
             </div>
 
-            <div style={styles.heroRight}>
-              <div style={styles.marketPreview}>
+            <div className="page-home-hero-right" style={styles.heroRight}>
+              <div className="page-home-market-preview" style={styles.marketPreview}>
                 <div style={styles.marketTag}>// MARKETPLACE</div>
                 <h2 style={styles.marketTitle}>
                   <span style={styles.marketAccentGreen}>BUY TICKETS</span>, SEE THE LEADERBOARD, AND{' '}
@@ -85,7 +85,7 @@ export default function Home() {
                   The purchasing flow now lives in the marketplace. Use it to mint tickets, then watch the leaderboard update as the lifetime ticket counts shift.
                 </p>
                 <Link href="/marketplace" className="nav-cta nav-cta--dark">OPEN_MARKETPLACE ↗</Link>
-                <div style={styles.marketStats}>
+                <div className="page-home-market-stats" style={styles.marketStats}>
                   <div style={styles.marketStat}>
                     <div style={styles.marketStatValue}>LIVE</div>
                     <div style={styles.marketStatLabel}>LEADERBOARD</div>

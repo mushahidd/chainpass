@@ -23,15 +23,15 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <div style={styles.section}>
-      <div style={styles.left}>
+    <div className="how-section" style={styles.section}>
+      <div className="how-left" style={styles.left}>
         <div style={styles.tag}>// V3</div>
         <div style={styles.title}>HOW_IT<br />WORKS</div>
         <div style={styles.subtitle}>
           No crypto background required. Four steps from purchase to stadium gate.
         </div>
       </div>
-      <div style={styles.right}>
+      <div className="how-right" style={styles.right}>
         {STEPS.map((step, i) => (
           <div
             key={step.num}

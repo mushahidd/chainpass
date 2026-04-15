@@ -102,15 +102,15 @@ function FeatureCard({ feature }) {
 
 export default function FeaturesSection() {
   return (
-    <section style={styles.section}>
-      <div style={styles.sectionHead}>
+    <section className="features-section" style={styles.section}>
+      <div className="features-head" style={styles.sectionHead}>
         <div style={styles.secNum}>V2</div>
         <div>
           <div style={styles.secTag}>// MODULE_FEATURES</div>
           <div style={styles.secTitle}>CORE_PROTOCOLS</div>
         </div>
       </div>
-      <div style={styles.grid}>
+      <div className="features-grid" style={styles.grid}>
         {FEATURES.map((f) => (
           <FeatureCard key={f.idx} feature={f} />
         ))}

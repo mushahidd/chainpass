@@ -1,30 +1,76 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useWeb3 } from '../utils/Web3Context';
 
 export default function Navbar() {
   const router = useRouter();
   const { account, connectWallet, loading, isOwner, isScanner } = useWeb3();
+  const navCenterRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const railKey = isMobile ? `mobile-rail-${router.pathname}` : 'desktop-rail';
 
-  const links = [
-    { label: 'HOME', href: '/', variant: 'secondary' },
-    { label: 'MARKETPLACE', href: '/marketplace', variant: 'primary' },
-    { label: 'LEADERBOARD', href: '/leaderboard', variant: 'primary' },
-    { label: 'MY TICKETS', href: '/tickets', variant: 'primary' },
-    { label: 'DOCS', href: '/docs', variant: 'secondary' },
-  ];
+  const links = useMemo(() => {
+    const baseLinks = [
+      { label: 'HOME', href: '/', variant: 'secondary' },
+      { label: 'MARKETPLACE', href: '/marketplace', variant: 'primary' },
+      { label: 'LEADERBOARD', href: '/leaderboard', variant: 'primary' },
+      { label: 'MY TICKETS', href: '/tickets', variant: 'primary' },
+      { label: 'DOCS', href: '/docs', variant: 'secondary' },
+    ];
 
-  if (isOwner) {
-    links.push({ label: 'ADMIN', href: '/admin', variant: 'primary' });
-  }
+    if (isMobile) {
+      return baseLinks;
+    }
 
-  if (isOwner || isScanner) {
-    links.push({ label: 'SCANNER', href: '/scanner', variant: 'secondary' });
-  }
+    if (isOwner) {
+      baseLinks.push({ label: 'ADMIN', href: '/admin', variant: 'primary' });
+    }
+
+    if (isOwner || isScanner) {
+      baseLinks.push({ label: 'SCANNER', href: '/scanner', variant: 'secondary' });
+    }
+
+    return baseLinks;
+  }, [isMobile, isOwner, isScanner]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const media = window.matchMedia('(max-width: 760px)');
+    const updateMobile = () => setIsMobile(media.matches);
+    updateMobile();
+
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', updateMobile);
+      return () => media.removeEventListener('change', updateMobile);
+    }
+
+    media.addListener(updateMobile);
+    return () => media.removeListener(updateMobile);
+  }, []);
+
+  useEffect(() => {
+    const rail = navCenterRef.current;
+    if (!rail || !isMobile) return;
+
+    const resetToStart = () => {
+      rail.scrollTo({ left: 0, behavior: 'auto' });
+    };
+
+    // Reset immediately and again after paint/focus restoration.
+    resetToStart();
+    const frame = requestAnimationFrame(resetToStart);
+    const timeout = setTimeout(resetToStart, 120);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timeout);
+    };
+  }, [isMobile, router.pathname, links.length]);
 
   return (
-    <nav style={styles.nav}>
+    <nav className="site-navbar" style={styles.nav}>
       <div style={styles.brandDock}>
         <Link href="/" style={styles.logoMark}>
           <img
@@ -41,7 +87,15 @@ export default function Navbar() {
         </Link>
       </div>
 
-      <div style={styles.navCenter}>
+      <div
+        key={railKey}
+        ref={navCenterRef}
+        className="site-navbar-center"
+        style={{
+          ...styles.navCenter,
+          justifyContent: isMobile ? 'flex-start' : 'center',
+        }}
+      >
         {links.map((link) => (
           <Link
             key={link.href}
@@ -77,7 +131,8 @@ const styles = {
     backdropFilter: 'blur(12px)',
     position: 'sticky',
     top: 0,
-    zIndex: 100,
+    zIndex: 9999,
+    willChange: 'z-index',
   },
   brandDock: {
     justifySelf: 'start',
@@ -114,6 +169,5 @@ const styles = {
     display: 'flex',
     gap: '8px',
     justifySelf: 'center',
-    justifyContent: 'center',
   },
 };

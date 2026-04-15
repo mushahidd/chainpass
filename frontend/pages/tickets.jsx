@@ -179,12 +179,12 @@ export default function MyTickets() {
         <title>Vault | ChainPass PSL</title>
       </Head>
 
-      <div style={styles.container}>
+      <div className="page-tickets" style={styles.container}>
         <Navbar />
         <Ticker />
 
-        <main style={styles.main}>
-          <header style={styles.header}>
+        <main className="page-tickets-main" style={styles.main}>
+          <header className="page-tickets-header" style={styles.header}>
             <div style={styles.secTag}>// FAN_VAULT</div>
             <h1 style={styles.title}>MY_COLLECTION</h1>
             <p style={styles.desc}>
@@ -205,11 +205,11 @@ export default function MyTickets() {
               <p>YOU DO NOT OWN ANY PSL TICKETS YET.</p>
             </div>
           ) : (
-            <div style={styles.grid}>
+            <div className="page-tickets-grid" style={styles.grid}>
               {tickets.map((t) => (
-                <div key={t.id} style={styles.card}>
-                  <div style={styles.cardBody}>
-                    <div style={styles.info}>
+                <div key={t.id} className="page-ticket-card" style={styles.card}>
+                  <div className="page-ticket-card-body" style={styles.cardBody}>
+                    <div className="page-ticket-info" style={styles.info}>
                       <span style={styles.tokenId}>#NFT_{t.id.toString().padStart(3, '0')}</span>
                       <h3 style={styles.matchTitle}>{t.matchDetails}</h3>
                       <p style={styles.seatInfo}>{t.stadium} · ENCLOSURE: {t.enclosure}</p>
@@ -234,7 +234,7 @@ export default function MyTickets() {
                       <div style={styles.listedMsg}>// STRICTLY_SOULBOUND (NON-TRANSFERABLE)</div>
                     </div>
 
-                    <div style={styles.qrSide}>
+                    <div className="page-ticket-qrside" style={styles.qrSide}>
                       {t.isUsed ? (
                         <div style={styles.usedBadge}>TICKET USED</div>
                       ) : (

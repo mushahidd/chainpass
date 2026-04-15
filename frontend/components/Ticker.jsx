@@ -35,8 +35,8 @@ export default function Ticker() {
   );
 
   return (
-    <div style={styles.ticker}>
-      <div style={styles.track}>
+    <div className="site-ticker" style={styles.ticker}>
+      <div className="site-ticker-track" style={styles.track}>
         <TickerItems />
         <TickerItems />
       </div>

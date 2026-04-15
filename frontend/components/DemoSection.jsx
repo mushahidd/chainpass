@@ -83,103 +83,17 @@ function QRCode({ id, match, enclosure }) {
   );
 }
 
-function PriceCapDemo() {
-  const { contract, account } = useWeb3();
-  const [price, setPrice] = useState('');
-  const [verdict, setVerdict] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-
-  const MAX = 2200; // Simplified for demo parity with the hardcoded PKR labels
-  const pct = Math.min(((parseFloat(price) || 0) / MAX) * 100, 100);
-  const over = parseFloat(price) > MAX;
-
-  async function handleSubmit() {
-    if (!contract || !price) return;
-    setLoading(true);
-    setVerdict(null);
-    setErrorMsg('');
-
-    try {
-      // For the demo, we try to list Token ID 0 (the first KK vs LQ ticket minted)
-      // The contract will check the price cap logic
-      const priceInWei = ethers.parseEther((parseFloat(price) / 20000).toString()); // Mocking exchange rate to WIRE
-      
-      const tx = await contract.listTicket(0, priceInWei);
-      await tx.wait();
-      setVerdict('approve');
-    } catch (err) {
-      console.error(err);
-      setVerdict('reject');
-      // Extract revert reason
-      if (err.message.includes("Price exceeds 110% cap")) {
-        setErrorMsg("ANTI-SCALP RULE VIOLATION: Price exceeds 110% of original mint value.");
-      } else {
-        setErrorMsg(err.reason || "Transaction failed at smart contract level.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div style={styles.demoCard}>
-      <div style={styles.demoLabel}>
-        PRICE_CAP_TEST — Original: PKR 2,000 · Max Allowed: PKR 2,200
-      </div>
-      <div style={styles.inputRow}>
-        <input
-          type="number"
-          placeholder="Enter resale price (PKR)"
-          value={price}
-          onChange={(e) => { setPrice(e.target.value); setVerdict(null); }}
-          style={styles.input}
-        />
-        <button 
-          onClick={handleSubmit} 
-          style={{...styles.submitBtn, borderColor: loading ? 'var(--dim)' : 'var(--border2)'}}
-          disabled={loading}
-        >
-          {loading ? 'WAITING_FOR_MINING...' : 'SUBMIT_TXN →'}
-        </button>
-      </div>
-      <div style={styles.capLabel}>CAP UTILIZATION</div>
-      <div style={styles.barWrap}>
-        <div style={{ ...styles.barFill, width: `${pct}%`, background: over ? 'var(--danger)' : 'var(--g)' }} />
-      </div>
-      <div style={styles.barEnds}>
-        <span>PKR 0</span>
-        <span>MAX: PKR 2,200</span>
-      </div>
-      {verdict && (
-        <div style={{
-          ...styles.verdict,
-          borderColor: verdict === 'approve' ? 'var(--g)' : 'var(--danger)',
-          background: verdict === 'approve' ? 'rgba(0,255,106,0.04)' : 'rgba(255,59,59,0.04)',
-          color: verdict === 'approve' ? 'var(--g)' : '#ff6666',
-        }}>
-          {verdict === 'reject'
-            ? `> TRANSACTION REJECTED\n> Reason: ${errorMsg || 'Price cap exceeded'}\n> Smart contract logic: Code is the Law.`
-            : `> TRANSACTION APPROVED\n> Listing successfully recorded on the blockchain.\n> Verified safe for the secondary market.`
-          }
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function DemoSection() {
   return (
-    <section style={styles.section}>
-      <div style={styles.sectionHead}>
+    <section className="demo-section" style={styles.section}>
+      <div className="demo-head" style={styles.sectionHead}>
         <div style={styles.secNum}>V4</div>
         <div>
           <div style={styles.secTag}>// LIVE_DEMO</div>
           <div style={styles.secTitle}>CONTRACT_INTERACTION</div>
         </div>
       </div>
-      <div style={styles.grid}>
-        <PriceCapDemo />
+      <div className="demo-grid" style={styles.grid}>
         <div style={styles.demoCard}>
           <div style={styles.demoLabel}>
             DYNAMIC_QR_DEMO — Live refreshing every 60 seconds
@@ -200,30 +114,9 @@ const styles = {
   secNum: { fontFamily: 'var(--display)', fontSize: '72px', color: 'var(--border2)', lineHeight: 1 },
   secTag: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--muted)', letterSpacing: '2px', marginBottom: '6px' },
   secTitle: { fontFamily: 'var(--display)', fontSize: '36px', color: 'var(--text)', letterSpacing: '2px' },
-  grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' },
+  grid: { display: 'grid', gridTemplateColumns: '1fr', gap: '40px' },
   demoCard: { background: 'var(--surface)', border: '1px solid var(--border)', padding: '32px' },
   demoLabel: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)', letterSpacing: '2px', marginBottom: '20px' },
-  inputRow: { display: 'flex', gap: '10px', marginBottom: '16px' },
-  input: {
-    flex: 1, background: 'var(--bg)', border: '1px solid var(--border2)',
-    color: 'var(--text)', fontFamily: 'var(--mono)', fontSize: '13px',
-    padding: '12px 16px', outline: 'none', letterSpacing: '1px',
-  },
-  submitBtn: {
-    fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '1.5px',
-    padding: '12px 20px', background: 'transparent', border: '1px solid var(--border2)',
-    color: 'var(--muted)', cursor: 'pointer', whiteSpace: 'nowrap',
-    transition: 'all 0.2s',
-  },
-  capLabel: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--dim)', marginBottom: '12px', letterSpacing: '1px' },
-  barWrap: { height: '3px', background: 'var(--border2)', marginBottom: '6px', overflow: 'hidden' },
-  barFill: { height: '100%', transition: 'width 0.35s ease, background 0.3s' },
-  barEnds: { display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)' },
-  verdict: {
-    marginTop: '16px', padding: '14px 16px', fontFamily: 'var(--mono)',
-    fontSize: '11px', letterSpacing: '1px', borderLeft: '2px solid',
-    whiteSpace: 'pre-line', lineHeight: 1.8,
-  },
   ticket: {
     background: 'var(--bg)', border: '1px solid var(--border2)',
     padding: '20px', display: 'flex', gap: '16px', alignItems: 'center',

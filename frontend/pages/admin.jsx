@@ -160,11 +160,11 @@ export default function AdminDashboard() {
         <title>Admin Command | ChainPass PSL</title>
       </Head>
 
-      <div style={styles.container}>
+      <div className="page-admin" style={styles.container}>
         <Navbar />
 
-        <main style={styles.main}>
-          <header style={styles.header}>
+        <main className="page-admin-main" style={styles.main}>
+          <header className="page-admin-header" style={styles.header}>
             <div style={styles.secTag}>// ADMIN_SYS</div>
             <h1 style={styles.title}>MATCH_DEPLOYMENT_CENTER</h1>
             <p style={styles.desc}>
@@ -188,19 +188,19 @@ export default function AdminDashboard() {
             </div>
           ) : !isOwner ? (
             <div style={styles.empty}>
-              <div style={styles.emptyHex} style={{...styles.emptyHex, color: 'red', borderColor: 'red'}}>X</div>
+              <div style={{...styles.emptyHex, color: 'red', borderColor: 'red'}}>X</div>
               <p style={{color: 'red'}}>ACCESS DENIED: NOT CONTRACT OWNER</p>
               <p style={styles.diagnostic}>CONNECTED_WALLET: {account}</p>
               {ownerAddress && <p style={styles.diagnostic}>CONTRACT_OWNER: {ownerAddress}</p>}
             </div>
           ) : (
-             <div style={styles.adminGrid}>
+             <div className="page-admin-grid" style={styles.adminGrid}>
                {/* Match Form */}
-               <div style={styles.card}>
-                 <div style={styles.cardHeader}>
+               <div className="page-admin-card" style={styles.card}>
+                 <div className="page-admin-card-header" style={styles.cardHeader}>
                    <h2 style={styles.cardTitle}>INITIALIZE_NEW_MATCH</h2>
                  </div>
-                 <form onSubmit={handleCreate} style={styles.form}>
+                 <form className="page-admin-form" onSubmit={handleCreate} style={styles.form}>
                    <div style={styles.inputGroup}>
                      <label style={styles.label}>TEAMS_PLAYING</label>
                      <input required autoFocus name="teams" value={form.teams} onChange={handleChange} style={styles.input} placeholder="e.g. Quetta Gladiators vs Peshawar Zalmi" />
@@ -211,14 +211,14 @@ export default function AdminDashboard() {
                      <input required name="stadium" value={form.stadium} onChange={handleChange} style={styles.input} placeholder="e.g. Bugti Stadium, Quetta" />
                    </div>
 
-                   <div style={styles.enclosurePanel}>
-                     <div style={styles.enclosureHeaderRow}>
+                   <div className="page-admin-enclosure-panel" style={styles.enclosurePanel}>
+                     <div className="page-admin-enclosure-header" style={styles.enclosureHeaderRow}>
                        <label style={styles.label}>ENCLOSURE_CONFIGURATION</label>
                        <button type="button" onClick={addEnclosureRow} style={styles.ghostBtn}>+ ADD ENCLOSURE</button>
                      </div>
 
                      {form.enclosures.map((enc, idx) => (
-                       <div key={idx} style={styles.enclosureRow}>
+                       <div key={idx} className="page-admin-enclosure-row" style={styles.enclosureRow}>
                          <input
                            required
                            value={enc.name}
@@ -265,13 +265,13 @@ export default function AdminDashboard() {
                </div>
 
                {/* Quick Info */}
-               <div style={styles.infoCol}>
-                 <div style={styles.infoBox}>
+               <div className="page-admin-info-col" style={styles.infoCol}>
+                 <div className="page-admin-info-box" style={styles.infoBox}>
                    <div style={styles.infoTag}>SYS_ROLE</div>
                    <div style={styles.infoVal}>CONTRACT_OWNER</div>
                    <div style={styles.infoDesc}>Verified Authority</div>
                  </div>
-                 <div style={styles.infoBox}>
+                 <div className="page-admin-info-box" style={styles.infoBox}>
                    <div style={styles.infoTag}>ARCHITECTURE</div>
                    <div style={styles.infoVal}>ENCLOSURE_MATRIX</div>
                    <div style={styles.infoDesc}>Define each enclosure's price and capacity per match. Fan minting options are derived strictly from this matrix.</div>

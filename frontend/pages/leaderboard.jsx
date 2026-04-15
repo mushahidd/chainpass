@@ -14,14 +14,14 @@ export default function LeaderboardPage() {
         <meta name="description" content="Track the lifetime ticket leaderboard on ChainPass." />
       </Head>
 
-      <div style={{ position: 'relative', minHeight: '100vh' }}>
+      <div className="page-leaderboard" style={{ position: 'relative', minHeight: '100vh' }}>
         <ParticleBackground />
         <div style={{ position: 'relative', zIndex: 1 }}>
           <Navbar />
           <Ticker />
 
-          <main style={styles.main}>
-            <header style={styles.header}>
+          <main className="page-leaderboard-main" style={styles.main}>
+            <header className="page-leaderboard-header" style={styles.header}>
               <div style={styles.eyebrow}>
                 <div style={styles.dot} />
                 <span style={styles.eyebrowText}>// LIFETIME_LEADERBOARD</span>
@@ -32,7 +32,7 @@ export default function LeaderboardPage() {
               </p>
             </header>
 
-            <div style={styles.content}>
+            <div className="page-leaderboard-content" style={styles.content}>
               <Leaderboard />
             </div>
           </main>

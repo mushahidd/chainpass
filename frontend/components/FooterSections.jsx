@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export function ScaleSection() {
   return (
-    <div style={styles.section}>
+    <div className="footer-scale-section" style={styles.section}>
       <div style={styles.col}>
         <div style={styles.tag}>// PRIMARY_USE_CASE</div>
         <div style={styles.big}>PSL<br /><span style={{ color: 'var(--g)' }}>2026</span></div>
@@ -51,7 +51,7 @@ export function CTASection() {
   ];
 
   return (
-    <div style={styles.cta}>
+    <div className="footer-cta-section" style={styles.cta}>
       <div>
         <div style={styles.ctaTag}>// INITIALIZE_REGISTRATION</div>
         <div style={styles.ctaTitle}>
@@ -80,7 +80,7 @@ export function CTASection() {
 
 export function Footer() {
   return (
-    <footer style={styles.footer}>
+    <footer className="site-footer" style={styles.footer}>
       <div style={styles.footerLeft}>
         CHAINPASS_PSL © 2026 · BUILT ON POLYGON · ALL RIGHTS RESERVED
       </div>

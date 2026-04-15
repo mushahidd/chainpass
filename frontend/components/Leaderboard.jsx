@@ -78,8 +78,8 @@ export default function Leaderboard() {
   }, [account, contract, web3Error]);
 
   return (
-    <section style={styles.panel}>
-      <div style={styles.header}>
+    <section className="leaderboard-panel" style={styles.panel}>
+      <div className="leaderboard-header" style={styles.header}>
         <div style={styles.tag}>// LIFETIME_LEADERBOARD</div>
         <h2 style={styles.title}>TOP_WALLET_RANKINGS</h2>
         <p style={styles.copy}>
@@ -87,7 +87,7 @@ export default function Leaderboard() {
         </p>
       </div>
 
-      <div style={styles.summaryRow}>
+      <div className="leaderboard-summary" style={styles.summaryRow}>
         <div style={styles.summaryCard}>
           <div style={styles.summaryValue}>{rows.length.toLocaleString()}</div>
           <div style={styles.summaryLabel}>WALLETS_TRACKED</div>
@@ -105,7 +105,7 @@ export default function Leaderboard() {
       ) : rows.length === 0 ? (
         <div style={styles.state}>NO_TICKET_ACTIVITY_YET.</div>
       ) : (
-        <div style={styles.table}>
+        <div className="leaderboard-table" style={styles.table}>
           <div style={styles.tableHead}>
             <span>RANK</span>
             <span>WALLET</span>

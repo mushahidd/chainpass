@@ -34,13 +34,13 @@ export default function Docs() {
         <title>Protocol Docs | ChainPass PSL</title>
       </Head>
 
-      <div style={styles.container}>
+      <div className="page-docs" style={styles.container}>
         <Navbar />
         <Ticker />
 
-        <main style={styles.main}>
-          <div style={styles.docWrapper}>
-            <aside style={styles.sidebar}>
+        <main className="page-docs-main" style={styles.main}>
+          <div className="page-docs-wrapper" style={styles.docWrapper}>
+            <aside className="page-docs-sidebar" style={styles.sidebar}>
               <div style={styles.sideLabel}>// SYSTEM_DOCUMENTATION</div>
               <ul style={styles.sideList}>
                 {sections.map(s => (
@@ -55,13 +55,13 @@ export default function Docs() {
               </div>
             </aside>
 
-            <section style={styles.content}>
-              <header style={styles.header}>
+            <section className="page-docs-content" style={styles.content}>
+              <header className="page-docs-header" style={styles.header}>
                 <div style={styles.secTag}>// TECHNICAL_OVERVIEW</div>
                 <h1 style={styles.title}>PROTOCOL_ARCHITECTURE</h1>
               </header>
 
-              <div style={styles.sections}>
+              <div className="page-docs-sections" style={styles.sections}>
                 {sections.map(s => (
                   <div key={s.tag} style={styles.docSection}>
                     <div style={styles.secHeader}>
@@ -73,7 +73,7 @@ export default function Docs() {
                 ))}
               </div>
 
-              <div style={styles.footerInfo}>
+              <div className="page-docs-footerinfo" style={styles.footerInfo}>
                 <div style={styles.infoHex}>i</div>
                 <p style={styles.footerText}>
                   This system is configured for <strong>WireFluid Testnet</strong> (Chain ID: <strong>92533</strong>) 

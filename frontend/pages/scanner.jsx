@@ -333,17 +333,17 @@ export default function Scanner() {
         <title>Gate Scanner | ChainPass</title>
       </Head>
 
-      <div style={styles.container}>
+      <div className="page-scanner" style={styles.container}>
         <Navbar />
 
-        <main style={styles.main}>
-          <header style={styles.header}>
+        <main className="page-scanner-main" style={styles.main}>
+          <header className="page-scanner-header" style={styles.header}>
             <div style={styles.secTag}>// STADIUM_GATEWAY</div>
             <h1 style={styles.title}>IDENTITY_SCANNER</h1>
             <p style={styles.tip}>Hold steady and keep the full QR inside frame. Increase source screen brightness for faster detection.</p>
           </header>
 
-          <div style={styles.statusBar}>
+          <div className="page-scanner-status" style={styles.statusBar}>
             <div style={{
               ...styles.statusDot,
               background: scanStatus === 'INVALID' ? '#FF003C' : scanStatus === 'USING' || scanStatus === 'VERIFYING' ? '#FFD600' : '#00FF6A',
@@ -359,7 +359,7 @@ export default function Scanner() {
             </span>
           </div>
 
-          <div style={styles.scannerWrapper}>
+          <div className="page-scanner-wrapper" style={styles.scannerWrapper}>
             <div style={{ display: scanStatus === 'IDLE' ? 'block' : 'none' }}>
               <div id="qr-reader" style={styles.reader}></div>
 
@@ -406,7 +406,7 @@ export default function Scanner() {
 
             {scanStatus === 'CNIC_PROMPT' && (
               <form onSubmit={handleCnicSubmit} style={styles.cnicForm}>
-                <h2 style={{fontFamily: 'var(--display)', fontSize: '32px', marginBottom: '10px'}}>QR ACQUIRED</h2>
+                <h2 className="page-scanner-title" style={{fontFamily: 'var(--display)', fontSize: '32px', marginBottom: '10px'}}>QR ACQUIRED</h2>
                 <p style={{fontFamily: 'var(--mono)', fontSize: '14px', color: 'var(--g)', marginBottom: '30px'}}>
                   AWAITING PHYSICAL IDENTITY VERIFICATION
                 </p>

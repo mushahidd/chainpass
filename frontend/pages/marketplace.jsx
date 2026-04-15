@@ -14,14 +14,14 @@ export default function Marketplace() {
         <meta name="description" content="Buy PSL tickets and monitor live demand on ChainPass." />
       </Head>
 
-      <div style={{ position: 'relative', minHeight: '100vh' }}>
+      <div className="page-marketplace" style={{ position: 'relative', minHeight: '100vh' }}>
         <ParticleBackground />
         <div style={{ position: 'relative', zIndex: 1 }}>
           <Navbar />
           <Ticker />
 
-          <main style={styles.main}>
-            <header style={styles.header}>
+          <main className="page-marketplace-main" style={styles.main}>
+            <header className="page-marketplace-header" style={styles.header}>
               <div style={styles.eyebrow}>
                 <div style={styles.dot} />
                 <span style={styles.eyebrowText}>// MARKETPLACE_EXCHANGE</span>
@@ -32,7 +32,7 @@ export default function Marketplace() {
               </p>
             </header>
 
-            <div style={styles.marketShell}>
+            <div className="page-marketplace-shell" style={styles.marketShell}>
               <MintForm />
             </div>
           </main>

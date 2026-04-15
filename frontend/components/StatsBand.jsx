@@ -25,6 +25,7 @@ function StatBlock({ idx, value, label, pill, pillGold, gold, delay }) {
 
   return (
     <div
+      className="stats-block"
       style={{
         ...styles.block,
         ...(hovered ? styles.blockHover : {}),
@@ -32,11 +33,12 @@ function StatBlock({ idx, value, label, pill, pillGold, gold, delay }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div style={styles.idx}>{idx}</div>
-      <div style={{ ...styles.num, color: gold ? 'var(--gold)' : 'var(--g)' }}>{value}</div>
-      <div style={styles.label}>{label}</div>
-      <span style={{ ...styles.pill, ...(pillGold ? styles.pillGold : {}) }}>{pill}</span>
+      <div className="stats-idx" style={styles.idx}>{idx}</div>
+      <div className="stats-num" style={{ ...styles.num, color: gold ? 'var(--gold)' : 'var(--g)' }}>{value}</div>
+      <div className="stats-label" style={styles.label}>{label}</div>
+      <span className="stats-pill" style={{ ...styles.pill, ...(pillGold ? styles.pillGold : {}) }}>{pill}</span>
       <div
+        className="stats-underline"
         style={{
           ...styles.underline,
           transform: hovered ? 'scaleX(1)' : 'scaleX(0)',
@@ -52,7 +54,7 @@ export default function StatsBand() {
   const saved = useCountUp(8550000, 2000, 'PKR ', 700);
 
   return (
-    <div style={styles.band}>
+    <div className="stats-band" style={styles.band}>
       <StatBlock idx="STATS_01 //" value={minted} label="TICKETS_MINTED" pill="STATUS: VERIFIED" />
       <StatBlock idx="STATS_02 //" value="0" label="FAKE_TICKETS" pill="STATUS: CLEAN" gold pillGold />
       <StatBlock idx="STATS_03 //" value={blocked} label="SCALP_TXN_BLOCKED" pill="CONTRACT: ENFORCED" />
