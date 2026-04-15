@@ -6,7 +6,21 @@ import { useWeb3 } from '../utils/Web3Context';
 import { ethers } from 'ethers';
 import { QRCodeSVG } from 'qrcode.react';
 
-const QR_TTL_SECONDS = 60;
+const QR_TTL_SECONDS = 90;
+const QR_VERSION = 2;
+const QR_SIZE = 320;
+
+function toBase64Url(bytes) {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function sigToBase64Url(sig) {
+  // Accepts 0x-prefixed signature strings.
+  const bytes = ethers.getBytes(sig);
+  return toBase64Url(bytes);
+}
 
 function DynamicQRCode({ ticket, account, provider }) {
   const [qrData, setQrData] = useState(null);
@@ -40,19 +54,24 @@ function DynamicQRCode({ ticket, account, provider }) {
     const generatePayload = async () => {
       const timestamp = Math.floor(Date.now() / 1000);
       const payloadObj = {
-        tokenId: ticket.id.toString(),
-        userAddress: account,
-        timestamp: timestamp
+        t: ticket.id,
+        u: account,
+        ts: timestamp,
+        v: QR_VERSION,
       };
       const payloadStr = JSON.stringify(payloadObj);
       const payloadHash = ethers.id(payloadStr);
       const qrSig = await sessionWallet.signMessage(ethers.getBytes(payloadHash));
 
+      // Keep QR payload compact (base64url instead of long hex strings).
+      const qrSigCompact = sigToBase64Url(qrSig);
+      const delegationSigCompact = sigToBase64Url(delegationSig);
+
       const finalData = JSON.stringify({
         p: payloadObj,
-        qS: qrSig,
+        qS: qrSigCompact,
         sP: sessionWallet.address,
-        dS: delegationSig
+        dS: delegationSigCompact
       });
 
       setQrData(finalData);
@@ -71,7 +90,7 @@ function DynamicQRCode({ ticket, account, provider }) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [sessionWallet, delegationSig, ticket.id, account]);
+  }, [sessionWallet, delegationSig, ticket.id, account, QR_VERSION]);
 
   if (!sessionWallet) {
     return (
@@ -94,14 +113,14 @@ function DynamicQRCode({ ticket, account, provider }) {
         {qrData ? (
           <QRCodeSVG
             value={qrData}
-            size={288}
+            size={QR_SIZE}
             fgColor="#111111"
             bgColor="#ffffff"
             includeMargin={true}
-            level="L"
+            level="M"
           />
         ) : (
-          <div style={{ height: 288, display: 'flex', alignItems: 'center' }}>GENERATING...</div>
+          <div style={{ height: QR_SIZE, display: 'flex', alignItems: 'center' }}>GENERATING...</div>
         )}
       </div>
       <div style={styles.qrMeta}>
@@ -262,8 +281,8 @@ const styles = {
   qrSide: { width: '380px', background: 'rgba(255,255,255,0.01)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px' },
   qrCard: { background: '#0e1113', padding: '18px', border: '1px solid var(--border2)' },
   qrWrapper: {
-    width: '316px',
-    height: '316px',
+    width: '360px',
+    height: '360px',
     background: '#ffffff',
     border: '1px solid #d9d9d9',
     display: 'flex',

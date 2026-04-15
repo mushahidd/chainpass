@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import contractInfo from '../../utils/contractData.json';
 
-const QR_TTL_SECONDS = 60;
+const QR_TTL_SECONDS = 90;
 
 const ABI = [
   "function getTicketData(uint256 tokenId) view returns (address owner, tuple(uint256 matchId, string enclosure, uint256 personCount, uint256 paidPrice, bytes32 cnicHash, bool isUsed) ticketObj, tuple(string teams, string stadium, uint256 maxCapacity, uint256 currentMinted, bool isActive) matchObj)",
@@ -12,6 +12,25 @@ const ABI = [
 const RPC_URL = process.env.WIREFLUID_RPC_URL || "https://evm.wirefluid.com";
 const SCANNER_PK = process.env.SCANNER_PRIVATE_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || contractInfo.address;
+
+function base64UrlToBytes(str) {
+  const normalized = String(str).replace(/-/g, '+').replace(/_/g, '/');
+  const padLen = (4 - (normalized.length % 4)) % 4;
+  const padded = normalized + '='.repeat(padLen);
+  return Buffer.from(padded, 'base64');
+}
+
+function normalizeSignature(sig) {
+  if (typeof sig !== 'string' || sig.length === 0) {
+    throw new Error('INVALID_SIGNATURE');
+  }
+  // Legacy: already-hex signature.
+  if (sig.startsWith('0x')) return sig;
+
+  // Compact: base64url signature.
+  const bytes = base64UrlToBytes(sig);
+  return ethers.hexlify(bytes);
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -37,25 +56,31 @@ export default async function handler(req, res) {
     // 1. Parse JSON
     const parsed = JSON.parse(qrData);
     const { p, qS, sP, dS } = parsed;
+
+    const tokenId = p?.tokenId ?? p?.t;
+    const userAddress = p?.userAddress ?? p?.u;
+    const timestamp = p?.timestamp ?? p?.ts;
     
     // 2. Verify Timestamp
     const now = Math.floor(Date.now() / 1000);
-    if (now - p.timestamp > QR_TTL_SECONDS) {
+    if (!timestamp || now - Number(timestamp) > QR_TTL_SECONDS) {
       return res.status(400).json({ valid: false, message: 'QR_EXPIRED' });
     }
 
     // 3. Verify Session Signature
     const payloadStr = JSON.stringify(p);
     const payloadHash = ethers.id(payloadStr);
-    const recoveredSessionPubKey = ethers.verifyMessage(ethers.getBytes(payloadHash), qS);
+    const sessionSig = normalizeSignature(qS);
+    const recoveredSessionPubKey = ethers.verifyMessage(ethers.getBytes(payloadHash), sessionSig);
     if (recoveredSessionPubKey.toLowerCase() !== sP.toLowerCase()) {
       return res.status(400).json({ valid: false, message: 'INVALID_SESSION_SIG' });
     }
 
     // 4. Verify Delegation Signature
     const expectedMessage = `Authorize ChainPass Session Key:\n${sP}`;
-    const recoveredUser = ethers.verifyMessage(expectedMessage, dS);
-    if (recoveredUser.toLowerCase() !== p.userAddress.toLowerCase()) {
+    const delegationSig = normalizeSignature(dS);
+    const recoveredUser = ethers.verifyMessage(expectedMessage, delegationSig);
+    if (!userAddress || recoveredUser.toLowerCase() !== String(userAddress).toLowerCase()) {
       return res.status(400).json({ valid: false, message: 'INVALID_DELEGATION_SIG' });
     }
 
@@ -65,9 +90,9 @@ export default async function handler(req, res) {
     const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
 
     // 6. Verify Ownership & State
-    const [ownerAddr, ticketInfo, matchInfo] = await contract.getTicketData(p.tokenId);
+    const [ownerAddr, ticketInfo, matchInfo] = await contract.getTicketData(tokenId);
     
-    if (ownerAddr.toLowerCase() !== p.userAddress.toLowerCase()) {
+    if (!userAddress || ownerAddr.toLowerCase() !== String(userAddress).toLowerCase()) {
       return res.status(400).json({ valid: false, message: 'NOT_TICKET_OWNER' });
     }
 
@@ -87,21 +112,21 @@ export default async function handler(req, res) {
       return res.status(200).json({
         valid: true,
         mode: 'verify',
-        tokenId: Number(p.tokenId),
+        tokenId: Number(tokenId),
         personCount,
         message: routingStr
       });
     }
 
     // 8. Execute State Change only in USE mode
-    const tx = await contract.markTicketAsUsed(p.tokenId);
+    const tx = await contract.markTicketAsUsed(tokenId);
     await tx.wait();
 
     // 9. Return final validation with consume tx hash
     return res.status(200).json({
       valid: true,
       mode: 'use',
-      tokenId: Number(p.tokenId),
+      tokenId: Number(tokenId),
       personCount,
       message: routingStr,
       txHash: tx.hash

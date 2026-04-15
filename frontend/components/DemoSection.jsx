@@ -14,7 +14,9 @@ function makeQRPattern(seed) {
 
 function QRCode({ id, match, enclosure }) {
   const { account, contract } = useWeb3();
-  const [cells, setCells] = useState(() => makeQRPattern(Date.now() + id * 9999));
+  // IMPORTANT: initial render must be deterministic to avoid Next.js hydration mismatch.
+  // We re-seed with real time only after mount (see interval effect below).
+  const [cells, setCells] = useState(() => makeQRPattern(id * 9999));
   const [timer, setTimer] = useState(id === 1 ? 30 : 18);
   const [signed, setSigned] = useState(false);
 

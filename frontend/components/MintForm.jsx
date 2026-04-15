@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useWeb3 } from '../utils/Web3Context';
 import { ethers } from 'ethers';
+import contractInfo from '../utils/contractData.json';
 
 export default function MintForm() {
   const { contract, account, web3Error } = useWeb3();
@@ -121,20 +122,55 @@ export default function MintForm() {
 
     setMinting(true);
     try {
+      const contractAddress = contract?.target || process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || contractInfo.address;
+      const rpcUrl = process.env.NEXT_PUBLIC_WIREFLUID_RPC_URL || 'https://evm.wirefluid.com';
+      const readOnlyProvider = new ethers.JsonRpcProvider(rpcUrl);
+      const readOnlyContract = new ethers.Contract(contractAddress, contractInfo.abi, readOnlyProvider);
+
       // PRIVACY PRESERVING LOCALLY HASHED CNIC
       const cnicHash = ethers.id(form.cnic);
       const selectedMatch = matches.find(m => m.id.toString() === form.matchId);
       const selectedEnclosure = selectedMatch?.enclosures.find((enc) => enc.name === form.enclosure);
 
       if (!selectedMatch) {
-        throw new Error('Selected match not found on current chain state.');
+        setError('Selected match not found. Refresh and re-select a match.');
+        return;
       }
 
       if (!selectedEnclosure) {
-        throw new Error('Selected enclosure is invalid for this match.');
+        setError('Selected enclosure is invalid for this match.');
+        return;
       }
 
-      const totalPrice = selectedEnclosure.price * BigInt(personCount);
+      // Read-only preflight checks via RPC (avoids MetaMask console spam).
+      const [onChainMatch, enclosureDetails, alreadyMinted] = await Promise.all([
+        readOnlyContract.matches(form.matchId),
+        readOnlyContract.getEnclosureDetails(form.matchId, form.enclosure),
+        readOnlyContract.matchWalletMintCount(form.matchId, account),
+      ]);
+
+      if (!onChainMatch.isActive) {
+        setError('This match is not active for minting.');
+        return;
+      }
+
+      const [priceWei, capacity, currentMinted, exists] = enclosureDetails;
+      if (!exists) {
+        setError('Selected enclosure does not exist on-chain for this match.');
+        return;
+      }
+
+      if (currentMinted >= capacity) {
+        setError('Selected enclosure is sold out. Choose another.');
+        return;
+      }
+
+      if (alreadyMinted !== 0n) {
+        setError('You can only mint one family pass per match for this wallet.');
+        return;
+      }
+
+      const totalPrice = priceWei * BigInt(personCount);
       
       const tx = await contract.mintTicket(
         form.matchId,
@@ -142,7 +178,8 @@ export default function MintForm() {
         cnicHash,
         personCount,
         "ipfs://QmDefaultHashTicketURI",
-        { value: totalPrice }
+        // Provide explicit gasLimit so the wallet doesn't have to rely on flaky estimateGas.
+        { value: totalPrice, gasLimit: 500000 }
       );
       
       await tx.wait();
@@ -153,11 +190,13 @@ export default function MintForm() {
       if (err.message.includes("EnclosureSoldOut")) {
         setError("Selected enclosure is sold out. Choose another.");
       } else if (err.message.includes("WalletLimitReached")) {
-        setError("You can only mint one family pass per match on this CNIC.");
+        setError("You can only mint one family pass per match for this wallet.");
       } else if (err.message.includes("InvalidPersonCount")) {
         setError("Family pass size must be between 1 and 5 people.");
+      } else if (err.message.includes('user rejected') || err.code === 'ACTION_REJECTED') {
+        setError('Transaction was rejected in wallet.');
       } else {
-        setError("Transaction failed. Check console or wallet limit.");
+        setError("Transaction failed. If this keeps happening, your RPC may be rejecting simulations; try again or switch RPC in MetaMask.");
       }
     } finally {
       setMinting(false);

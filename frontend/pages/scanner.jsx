@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
 import Navbar from '../components/Navbar';
-import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeScanner, Html5QrcodeSupportedFormats, Html5QrcodeScanType } from 'html5-qrcode';
 import { ethers } from 'ethers';
+
+const SCANNER_VERSION = 2;
 
 export default function Scanner() {
   const [scanStatus, setScanStatus] = useState('IDLE'); // IDLE, CNIC_PROMPT, VERIFYING, VERIFIED, USING, USED, INVALID
@@ -11,6 +13,46 @@ export default function Scanner() {
   const [cnicInput, setCnicInput] = useState('');
   const [html5Scanner, setHtml5Scanner] = useState(null);
   const [verifiedCnicHash, setVerifiedCnicHash] = useState('');
+  const didHandleScanRef = useRef(false);
+  const scannerRef = useRef(null);
+  const onScanSuccessRef = useRef(null);
+  const onScanFailureRef = useRef(null);
+  const fileDecoderRef = useRef(null);
+
+  const acceptDecodedPayload = async (decodedText) => {
+    if (didHandleScanRef.current) return;
+
+    try {
+      const parsed = JSON.parse(decodedText);
+      if (!parsed?.p || !parsed?.qS || !parsed?.sP || !parsed?.dS) {
+        throw new Error('INVALID_QR_PAYLOAD');
+      }
+
+      didHandleScanRef.current = true;
+      try {
+        scannerRef.current?.pause?.(true);
+      } catch {
+        // no-op
+      }
+      setQrPayload(decodedText);
+      setStatusMsg('');
+      setScanStatus('CNIC_PROMPT');
+    } catch {
+      setStatusMsg('ACCESS DENIED: INVALID_QR_PAYLOAD');
+      setScanStatus('INVALID');
+      didHandleScanRef.current = false;
+
+      setTimeout(() => {
+        try {
+          scannerRef.current?.resume?.();
+        } catch {
+          // no-op
+        }
+        setScanStatus('IDLE');
+        setStatusMsg('');
+      }, 2500);
+    }
+  };
 
   const resetScanner = () => {
     setScanStatus('IDLE');
@@ -18,56 +60,56 @@ export default function Scanner() {
     setCnicInput('');
     setQrPayload(null);
     setVerifiedCnicHash('');
+    didHandleScanRef.current = false;
 
-    if (html5Scanner && html5Scanner.getState() === 3) {
-      html5Scanner.resume();
+    if (html5Scanner) {
+      try {
+        html5Scanner.resume();
+      } catch {
+        // no-op; depends on internal scanner state
+      }
+    }
+  };
+
+  onScanSuccessRef.current = (decodedText) => acceptDecodedPayload(decodedText);
+  onScanFailureRef.current = (errorMessage) => {
+    const msg = typeof errorMessage === 'string'
+      ? errorMessage
+      : String(errorMessage?.message || errorMessage || '');
+
+    if (msg && !msg.includes('NotFoundException')) {
+      console.debug('QR decode issue:', errorMessage);
     }
   };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Re-init guard for dev Fast Refresh.
+      didHandleScanRef.current = false;
+
       const scanner = new Html5QrcodeScanner(
         "qr-reader",
         {
-          fps: 8,
-          qrbox: { width: 320, height: 320 },
-          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
+          fps: 15,
+          qrbox: { width: 420, height: 420 },
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+          // Helps a lot for scanning from screens / still images in Chromium browsers.
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true,
+          },
         },
         false
       );
       setHtml5Scanner(scanner);
+      scannerRef.current = scanner;
 
-      const onScanSuccess = async (decodedText) => {
-        if (scanner.getState() !== 2) return;
-
-        try {
-          const parsed = JSON.parse(decodedText);
-          if (!parsed?.p || !parsed?.qS || !parsed?.sP || !parsed?.dS) {
-            throw new Error('INVALID_QR_PAYLOAD');
-          }
-
-          scanner.pause(true);
-          setQrPayload(decodedText);
-          setStatusMsg('');
-          setScanStatus('CNIC_PROMPT');
-        } catch {
-          setStatusMsg('ACCESS DENIED: INVALID_QR_PAYLOAD');
-          setScanStatus('INVALID');
-
-          setTimeout(() => {
-            if (scanner.getState() === 3) {
-              scanner.resume();
-            }
-            setScanStatus('IDLE');
-            setStatusMsg('');
-          }, 2500);
-        }
+      const onScanSuccess = (decodedText, decodedResult) => {
+        return onScanSuccessRef.current?.(decodedText, decodedResult);
       };
 
       const onScanFailure = (errorMessage) => {
-        if (errorMessage && !errorMessage.includes('NotFoundException')) {
-          console.debug('QR decode issue:', errorMessage);
-        }
+        return onScanFailureRef.current?.(errorMessage);
       };
 
       scanner.render(onScanSuccess, onScanFailure);
@@ -76,7 +118,61 @@ export default function Scanner() {
         scanner.clear().catch(console.error);
       };
     }
+  }, [SCANNER_VERSION]);
+
+  useEffect(() => {
+    return () => {
+      try {
+        fileDecoderRef.current?.clear?.();
+      } catch {
+        // no-op
+      }
+      fileDecoderRef.current = null;
+    };
   }, []);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Best path (Chromium): native BarcodeDetector.
+      if (typeof window !== 'undefined' && typeof window.BarcodeDetector === 'function') {
+        const bitmap = await createImageBitmap(file);
+        const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+        const barcodes = await detector.detect(bitmap);
+        const rawValue = barcodes?.[0]?.rawValue;
+
+        if (!rawValue) {
+          setScanStatus('INVALID');
+          setStatusMsg('ACCESS DENIED: QR_NOT_DETECTED');
+          setTimeout(() => resetScanner(), 2500);
+          return;
+        }
+
+        await acceptDecodedPayload(rawValue);
+        return;
+      }
+
+      // Fallback (Firefox / older browsers): decode via html5-qrcode's JS decoder.
+      if (!fileDecoderRef.current) {
+        fileDecoderRef.current = new Html5Qrcode('qr-file-reader');
+      }
+
+      // showImage=true improves reliability because html5-qrcode renders the image
+      // into the target element before decoding (some browsers need this path).
+      const decodedText = await fileDecoderRef.current.scanFile(file, /* showImage= */ true);
+      await acceptDecodedPayload(decodedText);
+    } catch (err) {
+      console.error('Image scan failed', err);
+      setScanStatus('INVALID');
+      setStatusMsg('ACCESS DENIED: IMAGE_SCAN_FAILED');
+      setTimeout(() => resetScanner(), 3500);
+    } finally {
+      // Allow uploading the same file again.
+      e.target.value = '';
+    }
+  };
 
   const handleCnicSubmit = async (e) => {
     e.preventDefault();
@@ -186,7 +282,47 @@ export default function Scanner() {
           <div style={styles.scannerWrapper}>
             <div style={{ display: scanStatus === 'IDLE' ? 'block' : 'none' }}>
               <div id="qr-reader" style={styles.reader}></div>
+
+              <div style={{ marginTop: '14px' }}>
+                <label style={{
+                  display: 'inline-block',
+                  fontFamily: 'var(--mono)',
+                  fontSize: '10px',
+                  letterSpacing: '1px',
+                  color: 'var(--muted)',
+                  marginBottom: '8px'
+                }}>
+                  OR_UPLOAD_QR_IMAGE
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{
+                    display: 'block',
+                    margin: '0 auto',
+                    fontFamily: 'var(--mono)',
+                    fontSize: '12px',
+                    color: 'var(--text)'
+                  }}
+                />
+              </div>
             </div>
+
+            {/* Offscreen render target used by html5-qrcode's scanFile() fallback.
+                Must NOT be display:none for reliable decoding in some browsers. */}
+            <div
+              id="qr-file-reader"
+              style={{
+                position: 'absolute',
+                left: '-9999px',
+                top: '-9999px',
+                width: '600px',
+                height: '600px',
+                overflow: 'hidden',
+                background: '#fff',
+              }}
+            />
 
             {scanStatus === 'CNIC_PROMPT' && (
               <form onSubmit={handleCnicSubmit} style={styles.cnicForm}>
