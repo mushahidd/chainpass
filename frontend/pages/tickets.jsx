@@ -16,7 +16,7 @@ function makeQRPattern(seed) {
 }
 
 function QRCode({ id }) {
-  const [cells, setCells] = useState(() => makeQRPattern(Date.now()));
+  const [cells, setCells] = useState(() => makeQRPattern(id * 54321));
   const [timer, setTimer] = useState(30);
 
   useEffect(() => {
