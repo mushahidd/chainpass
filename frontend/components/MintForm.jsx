@@ -28,7 +28,8 @@ export default function MintForm() {
         const activeMatches = [];
         for (let i = 0; i < Number(count); i++) {
           const matchData = await contract.matches(i);
-          if (matchData.isActive) {
+          const nowSeconds = Math.floor(Date.now() / 1000);
+          if (matchData.isActive && Number(matchData.matchTime) > nowSeconds) {
             const [enclosureNames, enclosurePrices, enclosureCapacities, enclosureMinted] = await contract.getMatchEnclosures(i);
             const enclosures = enclosureNames.map((name, idx) => ({
               name,
@@ -36,7 +37,16 @@ export default function MintForm() {
               capacity: enclosureCapacities[idx],
               minted: enclosureMinted[idx]
             }));
-            activeMatches.push({ id: i, teams: matchData.teams, stadium: matchData.stadium, maxCapacity: matchData.maxCapacity, currentMinted: matchData.currentMinted, enclosures });
+            activeMatches.push({ 
+              id: i, 
+              category: matchData.category,
+              matchTime: Number(matchData.matchTime),
+              teams: matchData.teams, 
+              stadium: matchData.stadium, 
+              maxCapacity: matchData.maxCapacity, 
+              currentMinted: matchData.currentMinted, 
+              enclosures 
+            });
           }
         }
         setMatches(activeMatches);
@@ -148,7 +158,7 @@ export default function MintForm() {
       const tokenUri = `data:application/json;base64,${encodedMeta}`;
 
       const totalPrice = priceWei * BigInt(personCount);
-      const tx = await contract.mintTicket(form.matchId, form.enclosure, cnicHash, personCount, tokenUri, { value: totalPrice, gasLimit: 500000 });
+      const tx = await contract.mintTicket(form.matchId, form.enclosure, cnicHash, personCount, tokenUri, { value: totalPrice });
       await tx.wait();
 
       setSuccess(`FAMILY_PASS SECURED FOR ${personCount} PEOPLE. Proceed to 'My Tickets' vault.`);
@@ -195,11 +205,16 @@ export default function MintForm() {
             <div style={styles.placeholder}>No active matches available.</div>
           ) : (
             <select name="matchId" value={form.matchId} onChange={handleChange} style={styles.input}>
-              {matches.map(m => (
-                <option key={m.id} value={m.id}>
-                  {m.teams} ({m.currentMinted.toString()}/{m.maxCapacity.toString()} seats)
-                </option>
-              ))}
+              {matches.map(m => {
+                const dateStr = new Date(m.matchTime * 1000).toLocaleString(undefined, {
+                  month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                return (
+                  <option key={m.id} value={m.id}>
+                    [{m.category}] {m.teams} · {dateStr} ({m.currentMinted.toString()}/{m.maxCapacity.toString()} seats)
+                  </option>
+                );
+              })}
             </select>
           )}
         </div>

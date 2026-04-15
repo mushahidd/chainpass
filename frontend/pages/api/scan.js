@@ -4,7 +4,7 @@ import contractInfo from '../../utils/contractData.json';
 const QR_TTL_SECONDS = 90;
 
 const ABI = [
-  "function getTicketData(uint256 tokenId) view returns (address owner, tuple(uint256 matchId, string enclosure, uint256 personCount, uint256 paidPrice, bytes32 cnicHash, bool isUsed) ticketObj, tuple(string teams, string stadium, uint256 maxCapacity, uint256 currentMinted, bool isActive) matchObj)",
+  "function getTicketData(uint256 tokenId) view returns (address owner, tuple(uint256 matchId, string enclosure, uint256 personCount, uint256 paidPrice, bytes32 cnicHash, bool isUsed) ticketObj, tuple(string category, string teams, string stadium, uint256 matchTime, uint256 maxCapacity, uint256 currentMinted, bool isActive) matchObj)",
   "function markTicketAsUsed(uint256 tokenId)",
   "function ownerOf(uint256 tokenId) view returns (address)"
 ];
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { qrData, cnicHash, mode = 'use' } = req.body;
+    const { qrData, cnicHash, mode = 'use', targetMatchId } = req.body;
     const normalizedMode = String(mode).toLowerCase();
 
     if (normalizedMode !== 'verify' && normalizedMode !== 'use') {
@@ -91,6 +91,10 @@ export default async function handler(req, res) {
 
     // 6. Verify Ownership & State
     const [ownerAddr, ticketInfo, matchInfo] = await contract.getTicketData(tokenId);
+
+    if (targetMatchId !== undefined && String(ticketInfo.matchId) !== String(targetMatchId)) {
+      return res.status(400).json({ valid: false, message: 'TICKET IS VALID BUT FOR A DIFFERENT MATCH' });
+    }
     
     if (!userAddress || ownerAddr.toLowerCase() !== String(userAddress).toLowerCase()) {
       return res.status(400).json({ valid: false, message: 'NOT_TICKET_OWNER' });

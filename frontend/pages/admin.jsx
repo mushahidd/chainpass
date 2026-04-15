@@ -7,6 +7,8 @@ import { useToast } from '../utils/ToastContext';
 import { ethers } from 'ethers';
 import { PSL_TEAMS, PSL_STADIUMS, STADIUM_ENCLOSURES } from '../utils/stadiumData';
 
+const MATCH_CATEGORIES = ['Group Match', 'Qualifier', 'Eliminator 1', 'Eliminator 2', 'Final'];
+
 const CATEGORY_COLORS = {
   'General': '#8eb79b',
   'First-Class': '#5ec4e8',
@@ -24,6 +26,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   const [form, setForm] = useState({
+    category: 'Group Match',
+    matchTime: '',
     teamA: '',
     teamB: '',
     stadium: '',
@@ -79,6 +83,8 @@ export default function AdminDashboard() {
     if (!form.teamA || !form.teamB) return addToast('Select both teams!', 'error');
     if (form.teamA === form.teamB) return addToast('Cannot select the same team twice!', 'error');
     if (!form.stadium) return addToast('Fill all required fields!', 'error');
+    if (!form.matchTime) return addToast('Select match date and time!', 'error');
+    
     const teamsPlaying = `${form.teamA} vs ${form.teamB}`;
     if (!form.enclosures.length) return addToast('Add at least one enclosure.', 'error');
     if (!contract) return addToast('Contract is unavailable on the active wallet network.', 'error');
@@ -103,11 +109,13 @@ export default function AdminDashboard() {
       const enclosurePrices = sanitizedEnclosures.map((enc) => ethers.parseEther(enc.price.toString()));
       const enclosureCapacities = sanitizedEnclosures.map((enc) => BigInt(enc.capacity));
 
-      const tx = await contract.createMatch(teamsPlaying, form.stadium, enclosureNames, enclosurePrices, enclosureCapacities);
+      const unixTime = Math.floor(new Date(form.matchTime).getTime() / 1000);
+
+      const tx = await contract.createMatch(form.category, teamsPlaying, form.stadium, unixTime, enclosureNames, enclosurePrices, enclosureCapacities);
       await tx.wait();
 
       addToast(`SUCCESS: Active Match Initialized For: ${teamsPlaying}`, 'success');
-      setForm({ teamA: '', teamB: '', stadium: '', enclosures: [] });
+      setForm({ category: 'Group Match', matchTime: '', teamA: '', teamB: '', stadium: '', enclosures: [] });
     } catch (err) {
       console.error("Match Admin failed:", err);
       addToast(err?.message || "FAILED to initialize match. Check console.", 'error');
@@ -164,6 +172,19 @@ export default function AdminDashboard() {
                   <h2 style={styles.cardTitle}>INITIALIZE_NEW_MATCH</h2>
                 </div>
                 <form onSubmit={handleCreate} style={styles.form}>
+                  <div style={{ display: 'flex', gap: '16px', flexDirection: 'row', flexWrap: 'wrap' }}>
+                    <div style={{ ...styles.inputGroup, flex: 1, minWidth: '160px' }}>
+                      <label style={styles.label}>MATCH_CATEGORY</label>
+                      <select required name="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} style={styles.select}>
+                        {MATCH_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ ...styles.inputGroup, flex: 1, minWidth: '160px' }}>
+                      <label style={styles.label}>START_TIME (PKT)</label>
+                      <input required type="datetime-local" value={form.matchTime} onChange={(e) => setForm({ ...form, matchTime: e.target.value })} style={styles.input} />
+                    </div>
+                  </div>
+
                   <div style={styles.inputGroup}>
                     <label style={styles.label}>TEAMS_PLAYING</label>
                     <div style={styles.teamSelectRow}>

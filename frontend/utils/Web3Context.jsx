@@ -5,7 +5,7 @@ import contractInfo from './contractData.json';
 const Web3Context = createContext();
 const EXPECTED_CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 92533);
 const NETWORK_LABEL = process.env.NEXT_PUBLIC_NETWORK_NAME || 'WireFluid Testnet';
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || contractInfo.address;
+const CONTRACT_ADDRESS = contractInfo.address || process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 
 export function Web3Provider({ children }) {
   const [account, setAccount] = useState(null);

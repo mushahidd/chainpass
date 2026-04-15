@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Navbar from '../components/Navbar';
 import { Html5Qrcode, Html5QrcodeScanner, Html5QrcodeSupportedFormats, Html5QrcodeScanType } from 'html5-qrcode';
 import { ethers } from 'ethers';
+import contractInfo from '../utils/contractData.json';
 
 const SCANNER_VERSION = 2;
 
@@ -18,6 +19,31 @@ export default function Scanner() {
   const onScanSuccessRef = useRef(null);
   const onScanFailureRef = useRef(null);
   const fileDecoderRef = useRef(null);
+
+  const [activeMatches, setActiveMatches] = useState([]);
+  const [selectedMatchId, setSelectedMatchId] = useState('');
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_WIREFLUID_RPC_URL || 'https://evm.wirefluid.com');
+        const contract = new ethers.Contract(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || contractInfo.address, contractInfo.abi, provider);
+        const count = await contract.getMatchCount();
+        const matches = [];
+        for (let i = 0; i < Number(count); i++) {
+          const matchData = await contract.matches(i);
+          if (matchData.isActive) {
+            matches.push({ id: i, category: matchData.category, teams: matchData.teams, matchTime: Number(matchData.matchTime) });
+          }
+        }
+        setActiveMatches(matches);
+        if (matches.length > 0) setSelectedMatchId(matches[0].id.toString());
+      } catch (err) {
+        console.error("Scanner fetch matches error", err);
+      }
+    };
+    fetchMatches();
+  }, []);
 
   const acceptDecodedPayload = async (decodedText) => {
     if (didHandleScanRef.current) return;
@@ -129,7 +155,7 @@ export default function Scanner() {
       const res = await fetch('/api/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ qrData: qrPayload, cnicHash: computedHash, mode: 'verify' })
+        body: JSON.stringify({ qrData: qrPayload, cnicHash: computedHash, mode: 'verify', targetMatchId: selectedMatchId })
       });
       const data = await res.json();
       if (data.valid) {
@@ -155,7 +181,7 @@ export default function Scanner() {
       const res = await fetch('/api/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ qrData: qrPayload, cnicHash: verifiedCnicHash, mode: 'use' })
+        body: JSON.stringify({ qrData: qrPayload, cnicHash: verifiedCnicHash, mode: 'use', targetMatchId: selectedMatchId })
       });
       const data = await res.json();
       if (data.valid) {
@@ -195,6 +221,21 @@ export default function Scanner() {
             <h1 style={styles.title}>IDENTITY_SCANNER</h1>
             <p style={styles.tip}>Hold steady and keep the full QR inside frame. Increase source screen brightness for faster detection.</p>
           </header>
+
+          {/* Target Match Selector */}
+          <div style={{ marginBottom: '24px', background: 'rgba(0,0,0,0.3)', padding: '16px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+            <label style={{ display: 'block', fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--g)', letterSpacing: '1px', marginBottom: '8px' }}>TARGET GATE MATCH</label>
+            <select 
+              value={selectedMatchId} 
+              onChange={(e) => setSelectedMatchId(e.target.value)}
+              style={{ width: '100%', background: 'rgba(255,255,255,0.02)', color: 'var(--text)', border: '1px solid var(--border2)', padding: '12px', fontFamily: 'var(--mono)', fontSize: '13px' }}
+            >
+              {activeMatches.map(m => {
+                const dateStr = new Date(m.matchTime*1000).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                return <option key={m.id} value={m.id} style={{ background: '#0a0a0a' }}>[{m.category}] {m.teams} · {dateStr}</option>;
+              })}
+            </select>
+          </div>
 
           {/* Status Bar */}
           <div style={styles.statusBar}>
@@ -246,6 +287,7 @@ export default function Scanner() {
                 <div style={styles.stateIcon}>📋</div>
                 <h2 style={styles.stateTitle}>QR ACQUIRED</h2>
                 <p style={styles.stateSubtitle}>AWAITING PHYSICAL IDENTITY VERIFICATION</p>
+                <div style={{...styles.statusDisplay, marginTop: '20px'}}>AWAITING PHYSICAL IDENTITY VERIFICATION</div>
                 <label style={styles.inputLabel}>ENTER FAN'S PHYSICAL CNIC NO.</label>
                 <input
                   autoFocus

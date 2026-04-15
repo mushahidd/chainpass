@@ -41,45 +41,51 @@ async function main() {
 
   // Match 0
   tx = await chainpass.createMatch(
+    "Group Match",
     "Karachi Kings vs Lahore Qalandars",
-    "National Stadium Karachi",
-    ["General", "Premium", "VIP"],
+    "National Bank Cricket Arena, Karachi",
+    Math.floor(Date.now() / 1000) + 86400, // +1 day
+    ["Iqbal Qasim", "Wasim Akram", "Hanif Mohammad"],
     [
-      hre.ethers.parseEther("0.01"),
-      hre.ethers.parseEther("0.02"),
-      hre.ethers.parseEther("0.05")
+      hre.ethers.parseEther("0.10"),
+      hre.ethers.parseEther("0.20"),
+      hre.ethers.parseEther("0.30")
     ],
-    [35000, 12000, 3000]
+    [5000, 2000, 1000]
   );
   await tx.wait();
   console.log("-> Match Created: KK vs LQ at National Stadium");
 
   // Match 1
   tx = await chainpass.createMatch(
+    "Qualifier",
     "Islamabad United vs Multan Sultans",
-    "Rawalpindi Cricket Stadium",
-    ["General", "Family", "VIP"],
+    "Rawalpindi Cricket Stadium, Rawalpindi",
+    Math.floor(Date.now() / 1000) + 172800, // +2 days
+    ["Sohail Tanvir", "Azhar Mahmood", "Imran Khan"],
     [
-      hre.ethers.parseEther("0.008"),
-      hre.ethers.parseEther("0.015"),
-      hre.ethers.parseEther("0.04")
+      hre.ethers.parseEther("0.10"),
+      hre.ethers.parseEther("0.20"),
+      hre.ethers.parseEther("0.30")
     ],
-    [18000, 9000, 3000]
+    [5000, 2000, 1000]
   );
   await tx.wait();
   console.log("-> Match Created: IU vs MS at Rawalpindi");
 
   // Match 2
   tx = await chainpass.createMatch(
+    "Final",
     "PSL GRAND FINAL",
-    "Gaddafi Stadium Lahore",
-    ["General", "Premium", "Hospitality"],
+    "Gaddafi Stadium, Lahore",
+    Math.floor(Date.now() / 1000) + 604800, // +7 days
+    ["Saeed Ahmad", "Rajas", "Fazal Mahmood"],
     [
-      hre.ethers.parseEther("0.02"),
-      hre.ethers.parseEther("0.04"),
-      hre.ethers.parseEther("0.08")
+      hre.ethers.parseEther("0.10"),
+      hre.ethers.parseEther("0.20"),
+      hre.ethers.parseEther("0.30")
     ],
-    [42000, 13000, 5000]
+    [5000, 2000, 1000]
   );
   await tx.wait();
   console.log("-> Match Created: PSL GRAND FINAL at Gaddafi Stadium");

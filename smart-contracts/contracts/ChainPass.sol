@@ -28,8 +28,10 @@ contract ChainPass is ERC721URIStorage, Ownable {
     uint8 public constant MAX_TICKETS_PER_WALLET = 5;
 
     struct Match {
+        string category;
         string teams;
         string stadium;
+        uint256 matchTime;
         uint256 maxCapacity;
         uint256 currentMinted;
         bool isActive;
@@ -62,7 +64,7 @@ contract ChainPass is ERC721URIStorage, Ownable {
 
     mapping(address => bool) public scanners;
 
-    event MatchCreated(uint256 indexed matchId, string teams, string stadium, uint256 totalCapacity);
+    event MatchCreated(uint256 indexed matchId, string category, string teams, string stadium, uint256 matchTime, uint256 totalCapacity);
     event TicketMinted(uint256 indexed tokenId, uint256 indexed matchId, address owner, bytes32 cnicHash);
     event TicketScanned(uint256 indexed tokenId, address indexed scanner);
 
@@ -80,8 +82,10 @@ contract ChainPass is ERC721URIStorage, Ownable {
     }
 
     function createMatch(
+        string memory category,
         string memory teams,
         string memory stadium,
+        uint256 matchTime,
         string[] memory enclosureNames,
         uint256[] memory enclosurePrices,
         uint256[] memory enclosureCapacities
@@ -127,13 +131,15 @@ contract ChainPass is ERC721URIStorage, Ownable {
         }
 
         matches[nextMatchId] = Match({
+            category: category,
             teams: teams,
             stadium: stadium,
+            matchTime: matchTime,
             maxCapacity: totalCapacity,
             currentMinted: 0,
             isActive: true
         });
-        emit MatchCreated(nextMatchId, teams, stadium, totalCapacity);
+        emit MatchCreated(nextMatchId, category, teams, stadium, matchTime, totalCapacity);
         nextMatchId++;
     }
 

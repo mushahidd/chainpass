@@ -1,5 +1,5 @@
 {
-  "address": "0xdf1828Dfb24d9122aad6eb6c6a3AF76699FDabD2",
+  "address": "0x0C562F64ED6fC697dCc1CcddD0E170Eb290A8cd2",
   "abi": [
     {
       "inputs": [],
@@ -272,6 +272,12 @@
         {
           "indexed": false,
           "internalType": "string",
+          "name": "category",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
           "name": "teams",
           "type": "string"
         },
@@ -280,6 +286,12 @@
           "internalType": "string",
           "name": "stadium",
           "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "matchTime",
+          "type": "uint256"
         },
         {
           "indexed": false,
@@ -452,6 +464,11 @@
       "inputs": [
         {
           "internalType": "string",
+          "name": "category",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
           "name": "teams",
           "type": "string"
         },
@@ -459,6 +476,11 @@
           "internalType": "string",
           "name": "stadium",
           "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "matchTime",
+          "type": "uint256"
         },
         {
           "internalType": "string[]",
@@ -642,6 +664,11 @@
           "components": [
             {
               "internalType": "string",
+              "name": "category",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
               "name": "teams",
               "type": "string"
             },
@@ -649,6 +676,11 @@
               "internalType": "string",
               "name": "stadium",
               "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "matchTime",
+              "type": "uint256"
             },
             {
               "internalType": "uint256",
@@ -747,6 +779,11 @@
       "outputs": [
         {
           "internalType": "string",
+          "name": "category",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
           "name": "teams",
           "type": "string"
         },
@@ -754,6 +791,11 @@
           "internalType": "string",
           "name": "stadium",
           "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "matchTime",
+          "type": "uint256"
         },
         {
           "internalType": "uint256",
