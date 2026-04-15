@@ -9,7 +9,7 @@ const TERM_LINES = [
   [{ cls: 'dim', t: '> ' }, { cls: 'w', t: 'royalty_pcb ' }, { cls: 'sep', t: '= ' }, { cls: 'gold', t: '0.03' }],
   [{ cls: 'dim', t: '> ' }, { cls: 'w', t: 'qr_interval ' }, { cls: 'sep', t: '= ' }, { cls: 'gold', t: '30000ms' }],
   [{ cls: 'sep', t: '————————————————————————' }],
-  [{ cls: 'dim', t: '$ ' }, { cls: 'g', t: 'deploy ' }, { cls: 'w', t: '--network polygon' }],
+  [{ cls: 'dim', t: '$ ' }, { cls: 'g', t: 'deploy ' }, { cls: 'w', t: '--network wirefluid' }],
   [{ cls: 'dim', t: '> ' }, { cls: 'g', t: 'Contract deployed ✓' }],
   [{ cls: 'dim', t: '> ' }, { cls: 'w', t: 'Address: ' }, { cls: 'g', t: '0x4f2a...b81c' }],
   [{ cls: 'sep', t: '————————————————————————' }],
@@ -86,7 +86,7 @@ export default function Terminal() {
       <div style={styles.contractBadge}>
         <div style={styles.badgeLabel}>DEPLOYED_CONTRACT_ADDRESS</div>
         <div style={styles.address}>0x4f2a8b3c9d1e7f0a2b5c8d3e6f1a4b7c9d2e5f08</div>
-        <span style={styles.network}>POLYGON · MAINNET</span>
+        <span style={styles.network}>WIREFLUID · TESTNET</span>
       </div>
 
       <style>{`

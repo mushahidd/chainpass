@@ -54,10 +54,9 @@ export default function Home() {
 
               <div className="page-home-badges" style={styles.badges}>
                 {[
-                  { label: 'POLYGON_MAINNET', gold: false },
-                  { label: 'WEB3AUTH', gold: false },
-                  { label: 'EASYPAY_BRIDGE', gold: true },
-                  { label: 'CHAINLINK_ORACLE', gold: false },
+                  { label: 'WIREFLUID_TESTNET', gold: false },
+                  { label: 'METAMASK_WALLET', gold: false },
+                  { label: 'ETHERS_V6', gold: true },
                 ].map((b) => (
                   <span
                     key={b.label}

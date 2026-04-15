@@ -2,7 +2,7 @@ const STEPS = [
   {
     num: '01',
     title: 'LOGIN_WITH_GOOGLE',
-    desc: 'Sign in with Google or phone number. Web3Auth automatically provisions a non-custodial blockchain wallet — the user never sees a seed phrase or private key.',
+    desc: 'Connect with MetaMask and authorize actions with your wallet signature. Keys remain under user control while ticket ownership is verified fully on-chain.',
   },
   {
     num: '02',

@@ -109,7 +109,9 @@ export default function Navbar() {
 
       <button
         className="nav-cta"
-        onClick={connectWallet}
+        onClick={() => {
+          void connectWallet();
+        }}
         disabled={loading}
       >
         {loading ? '// CONNECTING...' : account ? `// ${account.slice(0, 6)}...${account.slice(-4)}` : '// CONNECT_WALLET'}

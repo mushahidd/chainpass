@@ -25,9 +25,9 @@ export function ScaleSection() {
       </div>
       <div style={{ ...styles.col, borderRight: 'none' }}>
         <div style={styles.tag}>// TECH_STACK</div>
-        <div style={styles.big}>POLY<br /><span style={{ color: 'var(--g)' }}>GON</span></div>
+        <div style={styles.big}>WIRE<br /><span style={{ color: 'var(--g)' }}>FLUID</span></div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
-          {['Solidity smart contracts (ERC-721)', 'Web3Auth — social login abstraction', 'Chainlink oracles for match data', 'Safepay / PayMob PKR fiat bridge'].map((item) => (
+          {['Solidity smart contracts (ERC-721)', 'MetaMask wallet connection (EIP-1193)', 'Ethers.js v6 contract integration', 'WireFluid RPC + Chain ID 92533'].map((item) => (
             <div key={item} style={styles.scItem}>
               <div style={styles.dot} />
               {item}
@@ -41,13 +41,13 @@ export function ScaleSection() {
 
 export function CTASection() {
   const params = [
-    { k: 'NETWORK', v: 'POLYGON MAINNET', gold: false },
+    { k: 'NETWORK', v: 'WIREFLUID TESTNET', gold: false },
     { k: 'TOKEN_STANDARD', v: 'ERC-721', gold: false },
     { k: 'RESALE_CAP', v: 'ORIGINAL + 10%', gold: false },
     { k: 'ROYALTY_SPLIT', v: '3% → PCB', gold: true },
     { k: 'QR_REFRESH', v: 'EVERY 30s', gold: false },
-    { k: 'AUTH', v: 'WEB3AUTH', gold: false },
-    { k: 'PAYMENT', v: 'EASYPAY BRIDGE', gold: true },
+    { k: 'AUTH', v: 'METAMASK', gold: false },
+    { k: 'PAYMENT', v: 'NATIVE WIRE GAS', gold: true },
   ];
 
   return (
@@ -82,7 +82,7 @@ export function Footer() {
   return (
     <footer className="site-footer" style={styles.footer}>
       <div style={styles.footerLeft}>
-        CHAINPASS_PSL © 2026 · BUILT ON POLYGON · ALL RIGHTS RESERVED
+        CHAINPASS_PSL © 2026 · BUILT ON WIREFLUID · ALL RIGHTS RESERVED
       </div>
       <div style={styles.footerRight}>
         <Link href="/docs" style={styles.footerLink}>DOCS</Link>

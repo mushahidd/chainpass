@@ -51,7 +51,7 @@ const FEATURES = [
   {
     idx: 'C_05 //',
     title: 'WEB3_ABSTRACT_LOGIN',
-    desc: 'Sign in with Google or phone number. Web3Auth silently provisions a non-custodial blockchain wallet — no seed phrase, no private key shown. Pure Web2 experience, Web3 security.',
+    desc: 'Connect directly with MetaMask. Wallet ownership stays non-custodial, all signing happens client-side, and private keys never leave the wallet extension.',
     pill: 'ZERO_CRYPTO_UX',
     icon: (
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--g)" strokeWidth="1.5" strokeLinecap="round">

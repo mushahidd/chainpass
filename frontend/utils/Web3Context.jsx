@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { ethers } from 'ethers';
 import contractInfo from './contractData.json';
 
@@ -17,6 +17,7 @@ export function Web3Provider({ children }) {
   const [web3Error, setWeb3Error] = useState('');
   const [loading, setLoading] = useState(false);
   const [manuallyDisconnected, setManuallyDisconnected] = useState(false);
+  const connectInFlightRef = useRef(false);
 
   const clearSession = useCallback(() => {
     setAccount(null);
@@ -93,18 +94,42 @@ export function Web3Provider({ children }) {
       setContract(null);
       setIsOwner(false);
       setIsScanner(false);
-      setWeb3Error('Wallet connection failed. Check browser console for details.');
+
+      const errorCode = Number(error?.code);
+      const errorMessage = String(error?.message || '');
+
+      if (errorCode === 4001) {
+        setWeb3Error('Wallet connection request was rejected in MetaMask.');
+      } else if (errorCode === -32002) {
+        setWeb3Error('MetaMask connection request already pending. Open MetaMask and approve it.');
+      } else if (errorMessage.toLowerCase().includes('failed to connect to metamask')) {
+        setWeb3Error('Failed to connect to MetaMask. Unlock MetaMask and reload this page.');
+      } else {
+        setWeb3Error('Wallet connection failed. Check browser console for details.');
+      }
     } finally {
       setLoading(false);
     }
   }, [clearSession]);
 
   const connectWallet = async () => {
-    setManuallyDisconnected(false);
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('chainpass_wallet_disconnected');
+    if (connectInFlightRef.current) {
+      return;
     }
-    await syncWalletState(true);
+
+    connectInFlightRef.current = true;
+    setManuallyDisconnected(false);
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('chainpass_wallet_disconnected');
+      }
+      await syncWalletState(true);
+    } catch (error) {
+      console.error('connectWallet failed:', error);
+      setWeb3Error('MetaMask connection failed. Please try again.');
+    } finally {
+      connectInFlightRef.current = false;
+    }
   };
 
   const disconnectWallet = useCallback(() => {
