@@ -128,6 +128,7 @@ export function Web3Provider({ children }) {
         expectedChainId: EXPECTED_CHAIN_ID,
         web3Error,
         connectWallet,
+        disconnectWallet: clearSession,
         loading
       }}
     >

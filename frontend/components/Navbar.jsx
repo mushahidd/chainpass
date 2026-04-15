@@ -4,7 +4,7 @@ import { useWeb3 } from '../utils/Web3Context';
 
 export default function Navbar() {
   const router = useRouter();
-  const { account, connectWallet, loading } = useWeb3();
+  const { account, connectWallet, disconnectWallet, loading } = useWeb3();
 
   const links = [
     { label: 'HOME', href: '/', variant: 'secondary' },
@@ -41,13 +41,30 @@ export default function Navbar() {
         ))}
       </div>
 
-      <button 
-        className="nav-cta"
-        onClick={connectWallet}
-        disabled={loading}
-      >
-        {loading ? '// CONNECTING...' : account ? `// ${account.slice(0, 6)}...${account.slice(-4)}` : '// CONNECT_WALLET'}
-      </button>
+      <div style={styles.authContainer}>
+        {account ? (
+          <>
+            <div className="nav-cta" style={{ cursor: 'default' }}>
+              // {account.slice(0, 6)}...{account.slice(-4)}
+            </div>
+            <button 
+              style={styles.logoutBtn}
+              onClick={disconnectWallet}
+              title="Disconnect Wallet"
+            >
+              [X] LOGOUT
+            </button>
+          </>
+        ) : (
+          <button 
+            className="nav-cta"
+            onClick={connectWallet}
+            disabled={loading}
+          >
+            {loading ? '// CONNECTING...' : '// CONNECT_WALLET'}
+          </button>
+        )}
+      </div>
 
     </nav>
   );
@@ -96,4 +113,20 @@ const styles = {
     display: 'flex',
     gap: '10px',
   },
+  authContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  logoutBtn: {
+    background: 'transparent',
+    border: '1px solid var(--border2)',
+    color: 'var(--muted)',
+    fontFamily: 'var(--mono)',
+    fontSize: '10px',
+    padding: '10px 16px',
+    cursor: 'pointer',
+    borderRadius: '100px',
+    transition: 'all 0.2s',
+  }
 };
