@@ -32,6 +32,7 @@ export default function Docs() {
     <>
       <Head>
         <title>Protocol Docs | ChainPass PSL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       <div style={styles.container}>
@@ -39,13 +40,15 @@ export default function Docs() {
         <Ticker />
 
         <main style={styles.main}>
-          <div style={styles.docWrapper}>
-            <aside style={styles.sidebar}>
+          <div className="docs-wrapper" style={styles.docWrapper}>
+            {/* Sidebar */}
+            <aside className="docs-sidebar" style={styles.sidebar}>
               <div style={styles.sideLabel}>// SYSTEM_DOCUMENTATION</div>
               <ul style={styles.sideList}>
                 {sections.map(s => (
                   <li key={s.tag} style={styles.sideItem}>
-                    <span style={styles.sideNum}>{s.tag}</span> {s.title}
+                    <span style={styles.sideNum}>{s.tag}</span>
+                    <span>{s.title}</span>
                   </li>
                 ))}
               </ul>
@@ -55,6 +58,7 @@ export default function Docs() {
               </div>
             </aside>
 
+            {/* Main content */}
             <section style={styles.content}>
               <header style={styles.header}>
                 <div style={styles.secTag}>// TECHNICAL_OVERVIEW</div>
@@ -64,6 +68,7 @@ export default function Docs() {
               <div style={styles.sections}>
                 {sections.map(s => (
                   <div key={s.tag} style={styles.docSection}>
+                    <div style={styles.secLine} />
                     <div style={styles.secHeader}>
                       <span style={styles.secNum}>{s.tag}</span>
                       <h2 style={styles.secTitle}>{s.title}</h2>
@@ -76,7 +81,7 @@ export default function Docs() {
               <div style={styles.footerInfo}>
                 <div style={styles.infoHex}>i</div>
                 <p style={styles.footerText}>
-                  This system is configured for <strong>WireFluid Testnet</strong> (Chain ID: <strong>92533</strong>) 
+                  This system is configured for <strong>WireFluid Testnet</strong> (Chain ID: <strong>92533</strong>){' '}
                   using RPC <strong>https://evm.wirefluid.com</strong>.
                 </p>
               </div>
@@ -84,45 +89,129 @@ export default function Docs() {
           </div>
         </main>
       </div>
+
+      <style>{`
+        @media (max-width: 860px) {
+          .docs-wrapper { grid-template-columns: 1fr !important; }
+          .docs-sidebar { position: static !important; display: flex; flex-direction: column; gap: 16px; border-bottom: 1px solid var(--border); padding-bottom: 28px; margin-bottom: 8px; }
+        }
+      `}</style>
     </>
   );
 }
 
 const styles = {
   container: { background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)' },
-  main: { padding: '60px 48px', maxWidth: '1440px', margin: '0 auto' },
-  docWrapper: { display: 'grid', gridTemplateColumns: '300px 1fr', gap: '80px' },
-  sidebar: { position: 'sticky', top: '120px', alignSelf: 'start' },
-  sideLabel: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--dim)', letterSpacing: '2px', marginBottom: '32px' },
-  sideList: { listStyle: 'none', padding: 0, margin: '0 0 60px 0' },
-  sideItem: { 
-    fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--muted)', 
-    marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '15px',
-    letterSpacing: '1px'
+  main: {
+    padding: 'clamp(32px, 6vw, 60px) clamp(16px, 5vw, 48px)',
+    maxWidth: '1440px',
+    margin: '0 auto',
   },
-  sideNum: { color: 'var(--g)', fontSize: '10px' },
-  contractBox: { background: 'rgba(255,255,255,0.02)', padding: '20px', border: '1px solid var(--border)' },
-  detLabel: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)', marginBottom: '8px' },
-  address: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--g)' },
-  content: { maxWidth: '800px' },
-  header: { marginBottom: '80px', borderBottom: '1px solid var(--border)', paddingBottom: '40px' },
-  secTag: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--muted)', letterSpacing: '3px', marginBottom: '12px' },
-  title: { fontFamily: 'var(--display)', fontSize: '56px', letterSpacing: '2px' },
-  sections: { display: 'flex', flexDirection: 'column', gap: '80px' },
+  docWrapper: {
+    display: 'grid',
+    gridTemplateColumns: 'clamp(200px, 25vw, 300px) 1fr',
+    gap: 'clamp(32px, 6vw, 80px)',
+  },
+  sidebar: {
+    position: 'sticky',
+    top: '100px',
+    alignSelf: 'start',
+    height: 'fit-content',
+  },
+  sideLabel: {
+    fontFamily: 'var(--mono)',
+    fontSize: '10px',
+    color: 'var(--dim)',
+    letterSpacing: '2px',
+    marginBottom: '28px',
+  },
+  sideList: { listStyle: 'none', padding: 0, margin: '0 0 48px 0' },
+  sideItem: {
+    fontFamily: 'var(--mono)',
+    fontSize: '11px',
+    color: 'var(--muted)',
+    marginBottom: '18px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    letterSpacing: '1px',
+    transition: 'color 0.2s',
+  },
+  sideNum: { color: 'var(--g)', fontSize: '10px', flexShrink: 0 },
+  contractBox: {
+    background: 'rgba(255,255,255,0.02)',
+    padding: '16px',
+    border: '1px solid var(--border)',
+    borderRadius: '4px',
+  },
+  detLabel: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)', marginBottom: '8px', letterSpacing: '1.5px' },
+  address: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--g)', wordBreak: 'break-all' },
+  content: { minWidth: 0 },
+  header: {
+    marginBottom: 'clamp(40px, 6vw, 80px)',
+    borderBottom: '1px solid var(--border)',
+    paddingBottom: 'clamp(24px, 4vw, 40px)',
+  },
+  secTag: {
+    fontFamily: 'var(--mono)',
+    fontSize: '10px',
+    color: 'var(--muted)',
+    letterSpacing: '3px',
+    marginBottom: '12px',
+  },
+  title: {
+    fontFamily: 'var(--display)',
+    fontSize: 'clamp(32px, 5vw, 56px)',
+    letterSpacing: '2px',
+    lineHeight: 1.0,
+  },
+  sections: { display: 'flex', flexDirection: 'column', gap: 'clamp(40px, 7vw, 80px)' },
   docSection: { position: 'relative' },
-  secHeader: { display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' },
-  secNum: { fontFamily: 'var(--display)', fontSize: '24px', color: 'var(--border2)' },
-  secTitle: { fontFamily: 'var(--display)', fontSize: '28px', letterSpacing: '2px' },
-  secText: { fontFamily: 'var(--body)', fontSize: '17px', color: 'var(--muted)', lineHeight: 1.8 },
-  footerInfo: { 
-    marginTop: '100px', padding: '32px', background: 'var(--surface)', 
-    border: '1px solid var(--border)', display: 'flex', gap: '24px', alignItems: 'center' 
+  secLine: {
+    width: '32px',
+    height: '2px',
+    background: 'var(--g)',
+    marginBottom: '20px',
+    boxShadow: '0 0 8px rgba(0,255,106,0.4)',
   },
-  infoHex: { 
-    width: '32px', height: '32px', background: 'var(--dim)', 
+  secHeader: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', flexWrap: 'wrap' },
+  secNum: { fontFamily: 'var(--display)', fontSize: '28px', color: 'var(--border2)', flexShrink: 0 },
+  secTitle: { fontFamily: 'var(--display)', fontSize: 'clamp(20px, 3vw, 28px)', letterSpacing: '2px' },
+  secText: {
+    fontFamily: 'var(--body)',
+    fontSize: 'clamp(14px, 2vw, 17px)',
+    color: 'var(--muted)',
+    lineHeight: 1.8,
+  },
+  footerInfo: {
+    marginTop: 'clamp(48px, 8vw, 100px)',
+    padding: 'clamp(20px, 4vw, 32px)',
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    display: 'flex',
+    gap: '20px',
+    alignItems: 'flex-start',
+    borderRadius: '4px',
+    flexWrap: 'wrap',
+  },
+  infoHex: {
+    width: '32px',
+    height: '32px',
+    background: 'var(--dim)',
     clipPath: 'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--bg)', flexShrink: 0
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontFamily: 'var(--mono)',
+    fontSize: '12px',
+    color: 'var(--bg)',
+    flexShrink: 0,
   },
-  footerText: { fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--dim)', lineHeight: 1.6 }
+  footerText: {
+    fontFamily: 'var(--mono)',
+    fontSize: 'clamp(11px, 1.5vw, 12px)',
+    color: 'var(--dim)',
+    lineHeight: 1.7,
+    flex: 1,
+  },
 };

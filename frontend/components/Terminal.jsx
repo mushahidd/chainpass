@@ -9,7 +9,7 @@ const TERM_LINES = [
   [{ cls: 'dim', t: '> ' }, { cls: 'w', t: 'royalty_pcb ' }, { cls: 'sep', t: '= ' }, { cls: 'gold', t: '0.03' }],
   [{ cls: 'dim', t: '> ' }, { cls: 'w', t: 'qr_interval ' }, { cls: 'sep', t: '= ' }, { cls: 'gold', t: '30000ms' }],
   [{ cls: 'sep', t: '————————————————————————' }],
-  [{ cls: 'dim', t: '$ ' }, { cls: 'g', t: 'deploy ' }, { cls: 'w', t: '--network polygon' }],
+  [{ cls: 'dim', t: '$ ' }, { cls: 'g', t: 'deploy ' }, { cls: 'w', t: '--network wirefluid' }],
   [{ cls: 'dim', t: '> ' }, { cls: 'g', t: 'Contract deployed ✓' }],
   [{ cls: 'dim', t: '> ' }, { cls: 'w', t: 'Address: ' }, { cls: 'g', t: '0x4f2a...b81c' }],
   [{ cls: 'sep', t: '————————————————————————' }],
@@ -86,7 +86,7 @@ export default function Terminal() {
       <div style={styles.contractBadge}>
         <div style={styles.badgeLabel}>DEPLOYED_CONTRACT_ADDRESS</div>
         <div style={styles.address}>0x4f2a8b3c9d1e7f0a2b5c8d3e6f1a4b7c9d2e5f08</div>
-        <span style={styles.network}>POLYGON · MAINNET</span>
+        <span style={styles.network}>WIREFLUID · TESTNET</span>
       </div>
 
       <style>{`
@@ -122,7 +122,7 @@ const styles = {
   dot: { width: '10px', height: '10px', borderRadius: '50%' },
   label: {
     fontFamily: 'var(--mono)',
-    fontSize: '9px',
+    fontSize: '11px',
     color: 'var(--dim)',
     letterSpacing: '1.5px',
   },
@@ -130,8 +130,8 @@ const styles = {
     flex: 1,
     padding: '24px 20px',
     fontFamily: 'var(--mono)',
-    fontSize: '11.5px',
-    lineHeight: 2,
+    fontSize: '13px',
+    lineHeight: 1.8,
     overflow: 'hidden',
     minHeight: '280px',
   },
@@ -143,7 +143,7 @@ const styles = {
   },
   badgeLabel: {
     fontFamily: 'var(--mono)',
-    fontSize: '9px',
+    fontSize: '11px',
     color: 'var(--dim)',
     letterSpacing: '1.5px',
     marginBottom: '8px',
@@ -158,7 +158,7 @@ const styles = {
   network: {
     display: 'inline-block',
     fontFamily: 'var(--mono)',
-    fontSize: '8px',
+    fontSize: '10px',
     color: 'var(--g)',
     border: '1px solid var(--border2)',
     padding: '3px 10px',

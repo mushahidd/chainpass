@@ -39,7 +39,7 @@ const FEATURES = [
   {
     idx: 'C_04 //',
     title: 'FIAT_PAYMENT_BRIDGE',
-    desc: 'Pay in PKR via EasyPaisa or JazzCash. The liquidity bridge silently converts PKR to MATIC and mints the NFT ticket. Zero crypto knowledge required from the user.',
+    desc: 'Pay in PKR via EasyPaisa or JazzCash. The liquidity bridge silently converts PKR to WIRE and mints the NFT ticket. Zero crypto knowledge required from the user.',
     pill: 'FIAT_ABSTRACTION',
     icon: (
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--g)" strokeWidth="1.5" strokeLinecap="round">
@@ -110,11 +110,19 @@ export default function FeaturesSection() {
           <div style={styles.secTitle}>CORE_PROTOCOLS</div>
         </div>
       </div>
-      <div style={styles.grid}>
+      <div className="features-grid" style={styles.grid}>
         {FEATURES.map((f) => (
           <FeatureCard key={f.idx} feature={f} />
         ))}
       </div>
+      <style>{`
+        @media (max-width: 1024px) {
+          .features-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 640px) {
+          .features-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </section>
   );
 }
@@ -128,24 +136,25 @@ const styles = {
     display: 'flex',
     alignItems: 'baseline',
     gap: '20px',
-    marginBottom: '64px',
+    marginBottom: 'clamp(32px, 5vw, 64px)',
+    flexWrap: 'wrap',
   },
   secNum: {
     fontFamily: 'var(--display)',
-    fontSize: '72px',
+    fontSize: 'clamp(48px, 6vw, 72px)',
     color: 'var(--border2)',
     lineHeight: 1,
   },
   secTag: {
     fontFamily: 'var(--mono)',
-    fontSize: '9px',
+    fontSize: '11px',
     color: 'var(--muted)',
     letterSpacing: '2px',
     marginBottom: '6px',
   },
   secTitle: {
     fontFamily: 'var(--display)',
-    fontSize: '36px',
+    fontSize: 'clamp(24px, 4vw, 36px)',
     color: 'var(--text)',
     letterSpacing: '2px',
   },
@@ -172,7 +181,7 @@ const styles = {
   },
   idx: {
     fontFamily: 'var(--mono)',
-    fontSize: '9px',
+    fontSize: '11px',
     color: 'var(--dim)',
     letterSpacing: '2px',
     marginBottom: '20px',
@@ -203,7 +212,7 @@ const styles = {
   pill: {
     display: 'inline-block',
     fontFamily: 'var(--mono)',
-    fontSize: '8px',
+    fontSize: '10px',
     color: 'var(--g)',
     border: '1px solid var(--border2)',
     padding: '3px 10px',

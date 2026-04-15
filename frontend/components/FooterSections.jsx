@@ -2,8 +2,8 @@ import Link from 'next/link';
 
 export function ScaleSection() {
   return (
-    <div style={styles.section}>
-      <div style={styles.col}>
+    <div className="scale-section" style={styles.section}>
+      <div className="scale-col" style={styles.col}>
         <div style={styles.tag}>// PRIMARY_USE_CASE</div>
         <div style={styles.big}>PSL<br /><span style={{ color: 'var(--g)' }}>2026</span></div>
         <div style={styles.desc}>
@@ -11,10 +11,10 @@ export function ScaleSection() {
           resale infrastructure. Built for the biggest cricket league in the country.
         </div>
       </div>
-      <div style={styles.col}>
+      <div className="scale-col" style={styles.col}>
         <div style={styles.tag}>// EXPANSION_TARGETS</div>
         <div style={styles.big}>NEXT<br /><span style={{ color: 'var(--g)' }}>STEP</span></div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+        <div className="scale-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
           {['Concerts — Atif Aslam, Kaifi Khalil', 'University Olympiads — FAST / LUMS / IBA', 'Cinema chains — nationwide rollout', 'Other sports leagues and tournaments'].map((item) => (
             <div key={item} style={styles.scItem}>
               <div style={styles.dot} />
@@ -23,10 +23,10 @@ export function ScaleSection() {
           ))}
         </div>
       </div>
-      <div style={{ ...styles.col, borderRight: 'none' }}>
+      <div className="scale-col scale-last" style={{ ...styles.col, borderRight: 'none' }}>
         <div style={styles.tag}>// TECH_STACK</div>
-        <div style={styles.big}>POLY<br /><span style={{ color: 'var(--g)' }}>GON</span></div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+        <div style={styles.big}>WIRE<br /><span style={{ color: 'var(--g)' }}>FLUID</span></div>
+        <div className="scale-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
           {['Solidity smart contracts (ERC-721)', 'Web3Auth — social login abstraction', 'Chainlink oracles for match data', 'Safepay / PayMob PKR fiat bridge'].map((item) => (
             <div key={item} style={styles.scItem}>
               <div style={styles.dot} />
@@ -41,7 +41,7 @@ export function ScaleSection() {
 
 export function CTASection() {
   const params = [
-    { k: 'NETWORK', v: 'POLYGON MAINNET', gold: false },
+    { k: 'NETWORK', v: 'WIREFLUID TESTNET', gold: false },
     { k: 'TOKEN_STANDARD', v: 'ERC-721', gold: false },
     { k: 'RESALE_CAP', v: 'ORIGINAL + 10%', gold: false },
     { k: 'ROYALTY_SPLIT', v: '3% → PCB', gold: true },
@@ -51,8 +51,8 @@ export function CTASection() {
   ];
 
   return (
-    <div style={styles.cta}>
-      <div>
+    <div className="cta-section" style={styles.cta}>
+      <div className="cta-left">
         <div style={styles.ctaTag}>// INITIALIZE_REGISTRATION</div>
         <div style={styles.ctaTitle}>
           SCALPING<br />ENDS <span style={{ color: 'var(--g)' }}>HERE.</span>
@@ -65,7 +65,7 @@ export function CTASection() {
           <Link href="/docs" className="nav-cta nav-cta--dark">WHITEPAPER ↗</Link>
         </div>
       </div>
-      <div style={styles.contractCard}>
+      <div className="cta-right contract-card" style={styles.contractCard}>
         <div style={styles.contractTitle}>CONTRACT_PARAMETERS</div>
         {params.map((p) => (
           <div key={p.k} style={styles.paramRow}>
@@ -80,16 +80,32 @@ export function CTASection() {
 
 export function Footer() {
   return (
-    <footer style={styles.footer}>
-      <div style={styles.footerLeft}>
-        CHAINPASS_PSL © 2026 · BUILT ON POLYGON · ALL RIGHTS RESERVED
+    <footer className="footer-wrap" style={styles.footer}>
+      <div className="footer-left" style={styles.footerLeft}>
+        CHAINPASS_PSL © 2026 · BUILT ON WIREFLUID · ALL RIGHTS RESERVED
       </div>
-      <div style={styles.footerRight}>
+      <div className="footer-right" style={styles.footerRight}>
         <Link href="/docs" style={styles.footerLink}>DOCS</Link>
         <a href="https://github.com" style={styles.footerLink}>GITHUB</a>
         <Link href="/docs" style={styles.footerLink}>CONTRACT</Link>
         <a href="#" style={styles.footerLink}>CONTACT</a>
       </div>
+      <style>{`
+        @media (max-width: 900px) {
+          .scale-section { grid-template-columns: 1fr !important; text-align: center; }
+          .scale-col { border-right: none !important; border-bottom: 1px solid var(--border) !important; padding: 40px 24px !important; align-items: center !important; display: flex !important; flex-direction: column !important; }
+          .scale-list { align-items: center; }
+          .scale-last { border-bottom: none !important; }
+          .cta-section { grid-template-columns: 1fr !important; gap: 40px !important; padding: 60px 24px !important; text-align: center; }
+          .cta-left { display: flex; flex-direction: column; align-items: center; text-align: center; }
+          .cta-left .nav-cta { justify-content: center; }
+          .footer-wrap { flex-direction: column !important; align-items: flex-start !important; gap: 20px !important; padding: 24px !important; }
+        }
+        @media (max-width: 480px) {
+          .contract-card { padding: 24px 16px !important; }
+          .footer-right { flex-wrap: wrap !important; }
+        }
+      `}</style>
     </footer>
   );
 }
@@ -101,29 +117,29 @@ const styles = {
     borderBottom: '1px solid var(--border)',
   },
   col: {
-    padding: '48px',
+    padding: 'clamp(32px, 5vw, 48px)',
     borderRight: '1px solid var(--border)',
   },
-  tag: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)', letterSpacing: '2px', marginBottom: '24px' },
-  big: { fontFamily: 'var(--display)', fontSize: '56px', color: 'var(--text)', lineHeight: 1, marginBottom: '12px' },
+  tag: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)', letterSpacing: '2px', marginBottom: '24px' },
+  big: { fontFamily: 'var(--display)', fontSize: 'clamp(40px, 6vw, 56px)', color: 'var(--text)', lineHeight: 1, marginBottom: '12px' },
   desc: { fontFamily: 'var(--body)', fontSize: '13px', color: 'var(--muted)', lineHeight: 1.7, fontWeight: 300 },
-  scItem: { display: 'flex', alignItems: 'center', gap: '10px', fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--muted)', letterSpacing: '0.5px' },
+  scItem: { display: 'flex', alignItems: 'center', gap: '10px', fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--muted)', letterSpacing: '0.5px' },
   dot: { width: '4px', height: '4px', background: 'var(--g)', flexShrink: 0 },
 
   cta: {
-    padding: '100px 48px',
+    padding: 'clamp(60px, 8vw, 100px) clamp(24px, 5vw, 48px)',
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '80px',
+    gap: 'clamp(40px, 6vw, 80px)',
     alignItems: 'center',
     borderBottom: '1px solid var(--border)',
   },
-  ctaTag: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--muted)', letterSpacing: '2.5px', marginBottom: '20px' },
-  ctaTitle: { fontFamily: 'var(--display)', fontSize: '52px', lineHeight: 1, letterSpacing: '2px', color: 'var(--text)', marginBottom: '12px' },
-  ctaSub: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--dim)', letterSpacing: '1.5px', marginBottom: '32px', lineHeight: 2 },
-  ctaBtns: { display: 'flex', gap: '12px' },
+  ctaTag: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--muted)', letterSpacing: '2.5px', marginBottom: '20px' },
+  ctaTitle: { fontFamily: 'var(--display)', fontSize: 'clamp(36px, 6vw, 52px)', lineHeight: 1, letterSpacing: '2px', color: 'var(--text)', marginBottom: '12px' },
+  ctaSub: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)', letterSpacing: '1.5px', marginBottom: '32px', lineHeight: 2 },
+  ctaBtns: { display: 'flex', gap: '12px', flexWrap: 'wrap' },
   contractCard: { background: 'var(--surface)', border: '1px solid var(--border)', padding: '32px' },
-  contractTitle: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--muted)', letterSpacing: '2px', marginBottom: '20px' },
+  contractTitle: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--muted)', letterSpacing: '2px', marginBottom: '20px' },
   paramRow: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: '12px 0', borderBottom: '1px solid var(--border)',
@@ -139,7 +155,7 @@ const styles = {
     justifyContent: 'space-between',
     borderTop: '1px solid var(--border)',
   },
-  footerLeft: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)', letterSpacing: '1.5px' },
+  footerLeft: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)', letterSpacing: '1.5px' },
   footerRight: { display: 'flex', gap: '24px' },
-  footerLink: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)', letterSpacing: '1px', textDecoration: 'none' },
+  footerLink: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)', letterSpacing: '1px', textDecoration: 'none' },
 };

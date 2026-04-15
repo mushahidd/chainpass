@@ -144,6 +144,7 @@ export function Web3Provider({ children }) {
         canAccessAdminTools: isOwner || isScanner,
         web3Error,
         connectWallet,
+        disconnectWallet: clearSession,
         loading
       }}
     >

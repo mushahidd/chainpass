@@ -5,10 +5,11 @@ import Ticker from '../components/Ticker';
 import { useWeb3 } from '../utils/Web3Context';
 import { ethers } from 'ethers';
 import { QRCodeSVG } from 'qrcode.react';
+import { useToast } from '../utils/ToastContext';
 
 const QR_TTL_SECONDS = 90;
 const QR_VERSION = 2;
-const QR_SIZE = 320;
+const QR_SIZE = 260;
 
 function toBase64Url(bytes) {
   let binary = '';
@@ -17,7 +18,6 @@ function toBase64Url(bytes) {
 }
 
 function sigToBase64Url(sig) {
-  // Accepts 0x-prefixed signature strings.
   const bytes = ethers.getBytes(sig);
   return toBase64Url(bytes);
 }
@@ -28,23 +28,22 @@ function DynamicQRCode({ ticket, account, provider }) {
   const [sessionWallet, setSessionWallet] = useState(null);
   const [delegationSig, setDelegationSig] = useState(null);
   const [isSigning, setIsSigning] = useState(false);
+  const { addToast } = useToast();
 
   const initSession = async () => {
     try {
       setIsSigning(true);
       const randomWallet = ethers.Wallet.createRandom();
       const signer = await provider.getSigner();
-      
       const message = `Authorize ChainPass Session Key:\n${randomWallet.address}`;
       const sig = await signer.signMessage(message);
-      
       setSessionWallet(randomWallet);
       setDelegationSig(sig);
       setIsSigning(false);
     } catch (err) {
       console.error(err);
       setIsSigning(false);
-      alert("Failed to authorize session key.");
+      addToast("Failed to authorize session key.", 'error');
     }
   };
 
@@ -53,27 +52,18 @@ function DynamicQRCode({ ticket, account, provider }) {
 
     const generatePayload = async () => {
       const timestamp = Math.floor(Date.now() / 1000);
-      const payloadObj = {
-        t: ticket.id,
-        u: account,
-        ts: timestamp,
-        v: QR_VERSION,
-      };
+      const payloadObj = { t: ticket.id, u: account, ts: timestamp, v: QR_VERSION };
       const payloadStr = JSON.stringify(payloadObj);
       const payloadHash = ethers.id(payloadStr);
       const qrSig = await sessionWallet.signMessage(ethers.getBytes(payloadHash));
-
-      // Keep QR payload compact (base64url instead of long hex strings).
       const qrSigCompact = sigToBase64Url(qrSig);
       const delegationSigCompact = sigToBase64Url(delegationSig);
-
       const finalData = JSON.stringify({
         p: payloadObj,
         qS: qrSigCompact,
         sP: sessionWallet.address,
         dS: delegationSigCompact
       });
-
       setQrData(finalData);
       setTimer(QR_TTL_SECONDS);
     };
@@ -81,10 +71,7 @@ function DynamicQRCode({ ticket, account, provider }) {
     generatePayload();
     const interval = setInterval(() => {
       setTimer((t) => {
-        if (t <= 1) {
-          generatePayload();
-          return QR_TTL_SECONDS;
-        }
+        if (t <= 1) { generatePayload(); return QR_TTL_SECONDS; }
         return t - 1;
       });
     }, 1000);
@@ -94,22 +81,18 @@ function DynamicQRCode({ ticket, account, provider }) {
 
   if (!sessionWallet) {
     return (
-      <div style={styles.qrCard}>
-        <div style={{ padding: '20px', textAlign: 'center' }}>
-          <button onClick={initSession} style={styles.authBtn} disabled={isSigning}>
-            {isSigning ? 'SIGNING...' : 'AUTHORIZE_PASS'}
-          </button>
-          <div style={{ marginTop: '12px', fontSize: '9px', color: 'var(--dim)', fontFamily: 'var(--mono)' }}>
-            REQUIRES 1-TIME METAMASK SIGNATURE
-          </div>
-        </div>
+      <div style={qrStyles.authBox}>
+        <button onClick={initSession} style={qrStyles.authBtn} disabled={isSigning}>
+          {isSigning ? 'SIGNING...' : 'AUTHORIZE_PASS'}
+        </button>
+        <div style={qrStyles.authNote}>REQUIRES 1-TIME METAMASK SIGNATURE</div>
       </div>
     );
   }
 
   return (
-    <div style={styles.qrCard}>
-      <div style={styles.qrWrapper}>
+    <div style={qrStyles.qrCard}>
+      <div style={qrStyles.qrWrapper}>
         {qrData ? (
           <QRCodeSVG
             value={qrData}
@@ -120,21 +103,47 @@ function DynamicQRCode({ ticket, account, provider }) {
             level="M"
           />
         ) : (
-          <div style={{ height: QR_SIZE, display: 'flex', alignItems: 'center' }}>GENERATING...</div>
+          <div style={{ height: QR_SIZE, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--muted)' }}>GENERATING...</div>
         )}
       </div>
-      <div style={styles.qrMeta}>
-        <div style={styles.qrTimer}>TTL: {timer}s</div>
-        <div style={styles.qrStatus}>SECURE_TOTP_ACTIVE</div>
+      <div style={qrStyles.qrMeta}>
+        <div style={qrStyles.qrTimer}>TTL: {timer}s</div>
+        <div style={qrStyles.qrStatus}>SECURE_TOTP_ACTIVE</div>
       </div>
     </div>
   );
 }
 
+const qrStyles = {
+  authBox: { padding: '24px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' },
+  authBtn: {
+    background: 'var(--g)', color: 'var(--bg)', border: 'none', padding: '12px 20px',
+    fontFamily: 'var(--mono)', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer',
+    clipPath: 'polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%)',
+    transition: 'opacity 0.2s',
+  },
+  authNote: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)', letterSpacing: '1px' },
+  qrCard: { background: '#0e1113', padding: '14px', border: '1px solid var(--border2)', width: '100%', maxWidth: '300px' },
+  qrWrapper: {
+    width: '100%',
+    aspectRatio: '1 / 1',
+    background: '#ffffff',
+    border: '1px solid #d9d9d9',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  qrMeta: { display: 'flex', justifyContent: 'space-between', marginTop: '10px' },
+  qrTimer: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--g)' },
+  qrStatus: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)' },
+};
+
 export default function MyTickets() {
   const { contract, account, provider } = useWeb3();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { addToast } = useToast();
 
   useEffect(() => {
     if (contract && account) {
@@ -166,6 +175,7 @@ export default function MyTickets() {
       setTickets(myItems);
     } catch (err) {
       console.error("Error loading tickets:", err);
+      addToast("Failed to load tickets. Ensure you are connected to the right network.", 'error');
     } finally {
       setLoading(false);
     }
@@ -175,6 +185,7 @@ export default function MyTickets() {
     <>
       <Head>
         <title>Vault | ChainPass PSL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       <div style={styles.container}>
@@ -193,25 +204,38 @@ export default function MyTickets() {
           {!account ? (
             <div style={styles.empty}>
               <div style={styles.emptyHex}>?</div>
-              <p>PLEASE CONNECT YOUR WALLET TO VIEW YOUR TICKETS.</p>
+              <p style={styles.emptyText}>PLEASE CONNECT YOUR WALLET TO VIEW YOUR TICKETS.</p>
             </div>
           ) : loading ? (
             <div style={styles.loading}>// QUERYING_COLLECTION...</div>
           ) : tickets.length === 0 ? (
             <div style={styles.empty}>
               <div style={styles.emptyHex}>0</div>
-              <p>YOU DO NOT OWN ANY PSL TICKETS YET.</p>
+              <p style={styles.emptyText}>YOU DO NOT OWN ANY PSL TICKETS YET.</p>
             </div>
           ) : (
             <div style={styles.grid}>
               {tickets.map((t) => (
                 <div key={t.id} style={styles.card}>
+                  {/* Card top strip */}
+                  <div style={styles.cardStrip}>
+                    <span style={styles.tokenId}>#NFT_{t.id.toString().padStart(3, '0')}</span>
+                    <span style={{
+                      ...styles.statusPill,
+                      background: t.isUsed ? 'rgba(255,59,59,0.12)' : 'rgba(0,255,106,0.12)',
+                      color: t.isUsed ? 'var(--danger)' : 'var(--g)',
+                      borderColor: t.isUsed ? 'var(--danger)' : 'var(--g)',
+                    }}>
+                      {t.isUsed ? 'USED' : 'VALID'}
+                    </span>
+                  </div>
+
                   <div style={styles.cardBody}>
+                    {/* Info column */}
                     <div style={styles.info}>
-                      <span style={styles.tokenId}>#NFT_{t.id.toString().padStart(3, '0')}</span>
                       <h3 style={styles.matchTitle}>{t.matchDetails}</h3>
                       <p style={styles.seatInfo}>{t.stadium} · ENCLOSURE: {t.enclosure}</p>
-                      
+
                       <div style={styles.details}>
                         <div style={styles.detRow}>
                           <span style={styles.detLabel}>PERSON_COUNT</span>
@@ -223,7 +247,7 @@ export default function MyTickets() {
                         </div>
                         <div style={styles.detRow}>
                           <span style={styles.detLabel}>ENTRY_STATUS</span>
-                          <span style={{...styles.detVal, color: t.isUsed ? 'red' : 'var(--g)'}}>
+                          <span style={{ ...styles.detVal, color: t.isUsed ? 'var(--danger)' : 'var(--g)' }}>
                             {t.isUsed ? 'SCANNED / USED' : 'VALID ENTRY'}
                           </span>
                         </div>
@@ -232,6 +256,7 @@ export default function MyTickets() {
                       <div style={styles.listedMsg}>// STRICTLY_SOULBOUND (NON-TRANSFERABLE)</div>
                     </div>
 
+                    {/* QR column */}
                     <div style={styles.qrSide}>
                       {t.isUsed ? (
                         <div style={styles.usedBadge}>TICKET USED</div>
@@ -247,56 +272,115 @@ export default function MyTickets() {
           )}
         </main>
       </div>
+
+      <style>{`
+        input:focus { border-color: var(--g) !important; outline: none; }
+        @media (max-width: 700px) {
+          .ticket-card-body { flex-direction: column !important; }
+          .ticket-qr-side { width: 100% !important; border-left: none !important; border-top: 1px solid var(--border) !important; padding: 24px !important; }
+          .ticket-details { flex-wrap: wrap !important; gap: 20px !important; }
+        }
+      `}</style>
     </>
   );
 }
 
 const styles = {
   container: { background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)' },
-  main: { padding: '60px 48px', maxWidth: '1440px', margin: '0 auto' },
-  header: { marginBottom: '60px' },
+  main: {
+    padding: 'clamp(32px, 6vw, 60px) clamp(16px, 5vw, 48px)',
+    maxWidth: '1440px',
+    margin: '0 auto',
+  },
+  header: { marginBottom: 'clamp(32px, 5vw, 60px)' },
   secTag: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--g)', letterSpacing: '3px', marginBottom: '12px' },
-  title: { fontFamily: 'var(--display)', fontSize: '64px', letterSpacing: '2px', marginBottom: '20px' },
-  desc: { fontFamily: 'var(--body)', fontSize: '16px', color: 'var(--muted)', lineHeight: 1.6, maxWidth: '600px' },
-  loading: { fontFamily: 'var(--mono)', fontSize: '14px', color: 'var(--muted)', textAlign: 'center', padding: '100px' },
-  empty: { textAlign: 'center', padding: '100px', background: 'var(--surface)', border: '1px solid var(--border)' },
-  emptyHex: { 
-    width: '40px', height: '40px', background: 'var(--border2)', margin: '0 auto 20px',
+  title: {
+    fontFamily: 'var(--display)',
+    fontSize: 'clamp(36px, 6vw, 64px)',
+    letterSpacing: '2px',
+    marginBottom: '16px',
+  },
+  desc: { fontFamily: 'var(--body)', fontSize: 'clamp(13px, 2vw, 16px)', color: 'var(--muted)', lineHeight: 1.6, maxWidth: '600px' },
+  loading: { fontFamily: 'var(--mono)', fontSize: '14px', color: 'var(--muted)', textAlign: 'center', padding: 'clamp(40px, 10vw, 100px) 20px' },
+  empty: {
+    textAlign: 'center',
+    padding: 'clamp(40px, 10vw, 100px) 20px',
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: '4px',
+  },
+  emptyHex: {
+    width: '48px', height: '48px', background: 'var(--border2)', margin: '0 auto 20px',
     clipPath: 'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontFamily: 'var(--mono)', color: 'var(--text)'
+    fontFamily: 'var(--mono)', color: 'var(--text)', fontSize: '16px',
   },
-  grid: { display: 'flex', flexDirection: 'column', gap: '24px' },
-  card: { background: 'var(--surface)', border: '1px solid var(--border)', padding: '0', position: 'relative', overflow: 'hidden' },
-  cardBody: { display: 'flex', minHeight: '220px' },
-  info: { flex: 1, padding: '32px', borderRight: '1px solid var(--border)' },
-  tokenId: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)', display: 'block', marginBottom: '8px' },
-  matchTitle: { fontFamily: 'var(--display)', fontSize: '32px', marginBottom: '6px', letterSpacing: '1px' },
-  seatInfo: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--muted)', marginBottom: '24px' },
-  details: { marginBottom: '32px', display: 'flex', gap: '40px' },
-  detRow: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  detLabel: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)' },
-  detVal: { fontFamily: 'var(--mono)', fontSize: '13px' },
-  listedMsg: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--muted)', letterSpacing: '1px' },
-  qrSide: { width: '380px', background: 'rgba(255,255,255,0.01)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px' },
-  qrCard: { background: '#0e1113', padding: '18px', border: '1px solid var(--border2)' },
-  qrWrapper: {
-    width: '360px',
-    height: '360px',
-    background: '#ffffff',
-    border: '1px solid #d9d9d9',
+  emptyText: { fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--muted)', letterSpacing: '1px' },
+  grid: { display: 'flex', flexDirection: 'column', gap: '20px' },
+  card: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    position: 'relative',
+    overflow: 'hidden',
+    transition: 'border-color 0.2s',
+    borderRadius: '4px',
+  },
+  cardStrip: {
     display: 'flex',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center'
+    padding: '12px 20px',
+    borderBottom: '1px solid var(--border)',
+    background: 'rgba(0,255,106,0.02)',
   },
-  qrMeta: { display: 'flex', justifyContent: 'space-between', marginTop: '12px' },
-  qrTimer: { fontFamily: 'var(--mono)', fontSize: '8px', color: 'var(--g)' },
-  qrStatus: { fontFamily: 'var(--mono)', fontSize: '8px', color: 'var(--dim)' },
-  qrInstruction: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--dim)', letterSpacing: '2px' },
-  usedBadge: { fontFamily: 'var(--display)', fontSize: '24px', color: 'red', border: '1px solid red', padding: '10px' },
-  authBtn: {
-    background: 'var(--g)', color: 'var(--bg)', border: 'none', padding: '12px 20px',
-    fontFamily: 'var(--mono)', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer',
-    clipPath: 'polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%)'
-  }
+  tokenId: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--dim)' },
+  statusPill: {
+    fontFamily: 'var(--mono)',
+    fontSize: '9px',
+    letterSpacing: '1.5px',
+    padding: '4px 10px',
+    border: '1px solid',
+    borderRadius: '999px',
+  },
+  cardBody: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    minHeight: '200px',
+  },
+  info: {
+    flex: '1 1 280px',
+    padding: 'clamp(20px, 3vw, 32px)',
+    borderRight: '1px solid var(--border)',
+  },
+  matchTitle: {
+    fontFamily: 'var(--display)',
+    fontSize: 'clamp(22px, 3vw, 32px)',
+    marginBottom: '6px',
+    letterSpacing: '1px',
+  },
+  seatInfo: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--muted)', marginBottom: '20px' },
+  details: { marginBottom: '24px', display: 'flex', gap: '32px', flexWrap: 'wrap' },
+  detRow: { display: 'flex', flexDirection: 'column', gap: '4px' },
+  detLabel: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)', letterSpacing: '0.5px' },
+  detVal: { fontFamily: 'var(--mono)', fontSize: '13px' },
+  listedMsg: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--muted)', letterSpacing: '1px' },
+  qrSide: {
+    flex: '0 1 320px',
+    minWidth: '240px',
+    background: 'rgba(255,255,255,0.01)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    padding: '20px',
+  },
+  qrInstruction: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)', letterSpacing: '2px' },
+  usedBadge: {
+    fontFamily: 'var(--display)',
+    fontSize: '24px',
+    color: 'var(--danger)',
+    border: '1px solid var(--danger)',
+    padding: '12px 24px',
+  },
 };

@@ -7,7 +7,7 @@ const STEPS = [
   {
     num: '02',
     title: 'PAY_PKR_VIA_EASYPAISA',
-    desc: 'Complete payment in Pakistani rupees. The backend liquidity bridge converts PKR to MATIC and mints the NFT ticket — all handled transparently in the background.',
+    desc: 'Complete payment in Pakistani rupees. The backend liquidity bridge converts PKR to WIRE and mints the NFT ticket — all handled transparently in the background.',
   },
   {
     num: '03',
@@ -23,15 +23,15 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <div style={styles.section}>
-      <div style={styles.left}>
+    <div className="how-it-works-section" style={styles.section}>
+      <div className="how-it-works-left" style={styles.left}>
         <div style={styles.tag}>// V3</div>
         <div style={styles.title}>HOW_IT<br />WORKS</div>
         <div style={styles.subtitle}>
           No crypto background required. Four steps from purchase to stadium gate.
         </div>
       </div>
-      <div style={styles.right}>
+      <div className="how-it-works-right" style={styles.right}>
         {STEPS.map((step, i) => (
           <div
             key={step.num}
@@ -48,6 +48,13 @@ export default function HowItWorks() {
           </div>
         ))}
       </div>
+      <style>{`
+        @media (max-width: 860px) {
+          .how-it-works-section { grid-template-columns: 1fr !important; }
+          .how-it-works-left { border-right: none !important; border-bottom: 1px solid var(--border) !important; padding-bottom: 40px !important; align-items: center !important; text-align: center !important; }
+          .how-it-works-right { padding-top: 40px !important; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -59,7 +66,7 @@ const styles = {
     borderBottom: '1px solid var(--border)',
   },
   left: {
-    padding: '64px 40px',
+    padding: 'clamp(40px, 6vw, 64px) clamp(24px, 4vw, 40px)',
     borderRight: '1px solid var(--border)',
     display: 'flex',
     flexDirection: 'column',
@@ -67,14 +74,14 @@ const styles = {
   },
   tag: {
     fontFamily: 'var(--mono)',
-    fontSize: '9px',
+    fontSize: '11px',
     color: 'var(--muted)',
     letterSpacing: '2px',
     marginBottom: '12px',
   },
   title: {
     fontFamily: 'var(--display)',
-    fontSize: '40px',
+    fontSize: 'clamp(32px, 5vw, 40px)',
     color: 'var(--text)',
     letterSpacing: '2px',
     marginBottom: '16px',
@@ -88,11 +95,11 @@ const styles = {
     fontWeight: 300,
   },
   right: {
-    padding: '64px 48px',
+    padding: 'clamp(40px, 6vw, 64px) clamp(24px, 4vw, 48px)',
   },
   stepRow: {
     display: 'flex',
-    gap: '20px',
+    gap: 'clamp(12px, 3vw, 20px)',
     padding: '24px 0',
   },
   stepNum: {
@@ -104,13 +111,13 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     fontFamily: 'var(--mono)',
-    fontSize: '10px',
+    fontSize: '11px',
     color: 'var(--muted)',
     marginTop: '2px',
   },
   stepTitle: {
     fontFamily: 'var(--mono)',
-    fontSize: '11px',
+    fontSize: '13px',
     color: 'var(--text)',
     letterSpacing: '1px',
     marginBottom: '6px',

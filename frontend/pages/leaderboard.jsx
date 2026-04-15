@@ -12,6 +12,7 @@ export default function LeaderboardPage() {
       <Head>
         <title>Leaderboard | ChainPass PSL</title>
         <meta name="description" content="Track the lifetime ticket leaderboard on ChainPass." />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       <div style={{ position: 'relative', minHeight: '100vh' }}>
@@ -44,12 +45,12 @@ export default function LeaderboardPage() {
 
 const styles = {
   main: {
-    padding: '56px 48px 80px',
+    padding: 'clamp(32px, 6vw, 56px) clamp(16px, 5vw, 48px) clamp(40px, 8vw, 80px)',
     maxWidth: '1440px',
     margin: '0 auto',
   },
   header: {
-    marginBottom: '44px',
+    marginBottom: 'clamp(28px, 5vw, 44px)',
     maxWidth: '840px',
   },
   eyebrow: {
@@ -64,6 +65,7 @@ const styles = {
     borderRadius: '50%',
     background: 'var(--g)',
     boxShadow: '0 0 18px rgba(0,255,106,0.6)',
+    flexShrink: 0,
   },
   eyebrowText: {
     fontFamily: 'var(--mono)',
@@ -73,19 +75,21 @@ const styles = {
   },
   title: {
     fontFamily: 'var(--display)',
-    fontSize: 'clamp(40px, 5vw, 72px)',
+    fontSize: 'clamp(32px, 6vw, 72px)',
     lineHeight: 0.96,
     letterSpacing: '1px',
     marginBottom: '16px',
   },
   desc: {
     fontFamily: 'var(--mono)',
-    fontSize: '13px',
+    fontSize: 'clamp(11px, 2vw, 13px)',
     lineHeight: 1.8,
     color: 'var(--muted)',
     maxWidth: '760px',
   },
   content: {
+    width: '100%',
     maxWidth: '1040px',
+    overflowX: 'auto',
   },
 };

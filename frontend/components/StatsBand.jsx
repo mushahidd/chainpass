@@ -25,6 +25,7 @@ function StatBlock({ idx, value, label, pill, pillGold, gold, delay }) {
 
   return (
     <div
+      className="stat-block"
       style={{
         ...styles.block,
         ...(hovered ? styles.blockHover : {}),
@@ -52,16 +53,18 @@ export default function StatsBand() {
   const saved = useCountUp(8550000, 2000, 'PKR ', 700);
 
   return (
-    <div style={styles.band}>
+    <div className="stats-band" style={styles.band}>
       <StatBlock idx="STATS_01 //" value={minted} label="TICKETS_MINTED" pill="STATUS: VERIFIED" />
       <StatBlock idx="STATS_02 //" value="0" label="FAKE_TICKETS" pill="STATUS: CLEAN" gold pillGold />
       <StatBlock idx="STATS_03 //" value={blocked} label="SCALP_TXN_BLOCKED" pill="CONTRACT: ENFORCED" />
       <StatBlock idx="STATS_04 //" value={saved} label="SAVED_FROM_SCALPERS" pill="IMPACT: LIVE" gold pillGold />
 
       <style>{`
-        @keyframes scanIn {
-          from { transform: scaleX(0); }
-          to { transform: scaleX(1); }
+        @media (max-width: 860px) {
+          .stats-band { grid-template-columns: repeat(2, 1fr) !important; }
+          .stat-block { border-bottom: 1px solid var(--border) !important; padding: 24px 20px !important; }
+          .stat-block:nth-child(2), .stat-block:nth-child(4) { border-right: none !important; }
+          .stat-block:nth-child(3), .stat-block:nth-child(4) { border-bottom: none !important; }
         }
       `}</style>
     </div>
@@ -73,9 +76,10 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: 'repeat(4, 1fr)',
     borderBottom: '1px solid var(--border)',
+    // Responsive via className .stats-band applied below
   },
   block: {
-    padding: '36px 40px',
+    padding: 'clamp(20px, 4vw, 36px) clamp(16px, 3vw, 40px)',
     borderRight: '1px solid var(--border)',
     position: 'relative',
     overflow: 'hidden',
@@ -87,20 +91,20 @@ const styles = {
   },
   idx: {
     fontFamily: 'var(--mono)',
-    fontSize: '9px',
+    fontSize: '11px',
     color: 'var(--dim)',
     letterSpacing: '2px',
-    marginBottom: '16px',
+    marginBottom: '14px',
   },
   num: {
     fontFamily: 'var(--display)',
-    fontSize: '44px',
+    fontSize: 'clamp(28px, 4vw, 44px)',
     letterSpacing: '1px',
     lineHeight: 1,
   },
   label: {
     fontFamily: 'var(--mono)',
-    fontSize: '9px',
+    fontSize: '11px',
     color: 'var(--muted)',
     letterSpacing: '1.5px',
     marginTop: '8px',
@@ -108,7 +112,7 @@ const styles = {
   pill: {
     display: 'inline-block',
     fontFamily: 'var(--mono)',
-    fontSize: '8px',
+    fontSize: '10px',
     color: 'var(--g)',
     border: '1px solid var(--border2)',
     padding: '3px 8px',
