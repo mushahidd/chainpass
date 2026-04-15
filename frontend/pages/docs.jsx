@@ -51,14 +51,14 @@ export default function Docs() {
               </ul>
               <div style={styles.contractBox}>
                 <div style={styles.detLabel}>CONTRACT_ADDRESS</div>
-                <div style={styles.address}>{contractAddress}</div>
+                <div className="page-docs-address" style={styles.address}>{contractAddress}</div>
               </div>
             </aside>
 
             <section className="page-docs-content" style={styles.content}>
               <header className="page-docs-header" style={styles.header}>
                 <div style={styles.secTag}>// TECHNICAL_OVERVIEW</div>
-                <h1 style={styles.title}>PROTOCOL_ARCHITECTURE</h1>
+                <h1 className="page-docs-title" style={styles.title}>PROTOCOL_ARCHITECTURE</h1>
               </header>
 
               <div className="page-docs-sections" style={styles.sections}>
@@ -66,7 +66,7 @@ export default function Docs() {
                   <div key={s.tag} style={styles.docSection}>
                     <div style={styles.secHeader}>
                       <span style={styles.secNum}>{s.tag}</span>
-                      <h2 style={styles.secTitle}>{s.title}</h2>
+                      <h2 className="page-docs-section-title" style={styles.secTitle}>{s.title}</h2>
                     </div>
                     <div style={styles.secText}>{s.content}</div>
                   </div>
@@ -103,16 +103,36 @@ const styles = {
   sideNum: { color: 'var(--g)', fontSize: '10px' },
   contractBox: { background: 'rgba(255,255,255,0.02)', padding: '20px', border: '1px solid var(--border)' },
   detLabel: { fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--dim)', marginBottom: '8px' },
-  address: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--g)' },
+  address: {
+    fontFamily: 'var(--mono)',
+    fontSize: '11px',
+    color: 'var(--g)',
+    lineHeight: 1.55,
+    overflowWrap: 'anywhere',
+    wordBreak: 'break-all'
+  },
   content: { maxWidth: '800px' },
   header: { marginBottom: '80px', borderBottom: '1px solid var(--border)', paddingBottom: '40px' },
   secTag: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--muted)', letterSpacing: '3px', marginBottom: '12px' },
-  title: { fontFamily: 'var(--display)', fontSize: '56px', letterSpacing: '2px' },
+  title: {
+    fontFamily: 'var(--display)',
+    fontSize: 'clamp(34px, 8vw, 56px)',
+    letterSpacing: '2px',
+    lineHeight: 0.95,
+    overflowWrap: 'anywhere',
+    wordBreak: 'break-word'
+  },
   sections: { display: 'flex', flexDirection: 'column', gap: '80px' },
   docSection: { position: 'relative' },
   secHeader: { display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' },
   secNum: { fontFamily: 'var(--display)', fontSize: '24px', color: 'var(--border2)' },
-  secTitle: { fontFamily: 'var(--display)', fontSize: '28px', letterSpacing: '2px' },
+  secTitle: {
+    fontFamily: 'var(--display)',
+    fontSize: 'clamp(22px, 5vw, 28px)',
+    letterSpacing: '2px',
+    overflowWrap: 'anywhere',
+    wordBreak: 'break-word'
+  },
   secText: { fontFamily: 'var(--body)', fontSize: '17px', color: 'var(--text)', lineHeight: 1.8, opacity: 0.9 },
   footerInfo: { 
     marginTop: '100px', padding: '32px', background: 'var(--surface)', 

@@ -651,6 +651,27 @@ input {
     gap: 44px !important;
   }
 
+  .page-docs-title {
+    font-size: clamp(30px, 12vw, 44px) !important;
+    letter-spacing: 1px !important;
+    line-height: 0.95 !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .page-docs-section-title {
+    font-size: clamp(20px, 6vw, 26px) !important;
+    letter-spacing: 1px !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .page-docs-address {
+    overflow-wrap: anywhere;
+    word-break: break-all;
+    line-height: 1.55;
+  }
+
   .page-docs-footerinfo {
     flex-direction: column !important;
     align-items: flex-start !important;
