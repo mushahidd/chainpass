@@ -180,7 +180,7 @@ export default function DemoSection() {
         <PriceCapDemo />
         <div style={styles.demoCard}>
           <div style={styles.demoLabel}>
-            DYNAMIC_QR_DEMO — Live refreshing every 30 seconds
+            DYNAMIC_QR_DEMO — Live refreshing every 60 seconds
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <QRCode id={1} match="KK vs LQ — 18 APR 2026" enclosure="UPPER_TIER_A" />

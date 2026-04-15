@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import contractInfo from '../../utils/contractData.json';
 
-const QR_TTL_SECONDS = 30;
+const QR_TTL_SECONDS = 60;
 
 const ABI = [
   "function getTicketData(uint256 tokenId) view returns (address owner, tuple(uint256 matchId, string enclosure, uint256 personCount, uint256 paidPrice, bytes32 cnicHash, bool isUsed) ticketObj, tuple(string teams, string stadium, uint256 maxCapacity, uint256 currentMinted, bool isActive) matchObj)",

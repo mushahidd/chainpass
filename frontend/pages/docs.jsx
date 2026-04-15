@@ -24,7 +24,7 @@ export default function Docs() {
     {
       tag: '04',
       title: 'SECURE_ENTRY_QR',
-      content: 'To prevent screenshot fraud, entry QR codes are generated dynamically. They require a cryptographic signature from the owner\'s private key and refresh every 30 seconds. Your ticket is tied to your wallet, and only you can produce a valid gate entry token.'
+      content: 'To prevent screenshot fraud, entry QR codes are generated dynamically. They require a cryptographic signature from the owner\'s private key and refresh every 60 seconds. Your ticket is tied to your wallet, and only you can produce a valid gate entry token.'
     }
   ];
 
