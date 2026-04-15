@@ -6,7 +6,7 @@ export default function App({ Component, pageProps }) {
   return (
     <Web3Provider>
       <Head>
-        <link rel="icon" href="/chainpass-logo.png" type="image/png" />
+        <link rel="icon" type="image/png" href="/favicon.png" />
       </Head>
       <Component {...pageProps} />
     </Web3Provider>
