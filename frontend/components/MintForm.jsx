@@ -10,7 +10,8 @@ export default function MintForm() {
   const [form, setForm] = useState({
     matchId: '',
     enclosure: '',
-    cnic: ''
+    cnic: '',
+    personCount: '1'
   });
   
   const [minting, setMinting] = useState(false);
@@ -103,8 +104,13 @@ export default function MintForm() {
     if (web3Error) return setError(web3Error);
     if (!account) return setError("Please connect your wallet first.");
     if (!contract) return setError("Contract connection is not ready.");
-    if (!form.matchId || !form.enclosure || !form.cnic) {
+    if (!form.matchId || !form.enclosure || !form.cnic || !form.personCount) {
       return setError("Please fill all fields.");
+    }
+
+    const personCount = Number(form.personCount);
+    if (!Number.isInteger(personCount) || personCount < 1 || personCount > 5) {
+      return setError('Family pass size must be between 1 and 5 people.');
     }
 
     // Basic regex for CNIC format XXXXX-XXXXXXX-X
@@ -127,24 +133,29 @@ export default function MintForm() {
       if (!selectedEnclosure) {
         throw new Error('Selected enclosure is invalid for this match.');
       }
+
+      const totalPrice = selectedEnclosure.price * BigInt(personCount);
       
       const tx = await contract.mintTicket(
         form.matchId,
         form.enclosure,
         cnicHash,
+        personCount,
         "ipfs://QmDefaultHashTicketURI",
-        { value: selectedEnclosure.price }
+        { value: totalPrice }
       );
       
       await tx.wait();
-      setSuccess("TICKET SECURED. Proceed to 'My Tickets' vault.");
-      setForm({ ...form, cnic: '' }); // clear sensitive data
+      setSuccess(`FAMILY_PASS SECURED FOR ${personCount} PEOPLE. Proceed to 'My Tickets' vault.`);
+      setForm({ ...form, cnic: '', personCount: '1' }); // clear sensitive data
     } catch (err) {
       console.error(err);
       if (err.message.includes("EnclosureSoldOut")) {
         setError("Selected enclosure is sold out. Choose another.");
       } else if (err.message.includes("WalletLimitReached")) {
-        setError("You can only mint a maximum of 5 tickets for this match.");
+        setError("You can only mint one family pass per match on this CNIC.");
+      } else if (err.message.includes("InvalidPersonCount")) {
+        setError("Family pass size must be between 1 and 5 people.");
       } else {
         setError("Transaction failed. Check console or wallet limit.");
       }
@@ -206,13 +217,25 @@ export default function MintForm() {
                   const remaining = Number(enc.capacity) - Number(enc.minted);
                   return (
                     <option key={enc.name} value={enc.name}>
-                      {enc.name} - {ethers.formatEther(enc.price)} ETH ({remaining} left)
+                      {enc.name} - {ethers.formatEther(enc.price)} WIRE ({remaining} left)
                     </option>
                   );
                 })}
               </select>
             );
           })()}
+        </div>
+
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>PERSON_COUNT</label>
+          <select name="personCount" value={form.personCount} onChange={handleChange} style={styles.input}>
+            {[1, 2, 3, 4, 5].map((count) => (
+              <option key={count} value={count}>
+                {count} PERSON{count > 1 ? 'S' : ''}
+              </option>
+            ))}
+          </select>
+          <p style={styles.privacyNote}>* One NFT will be minted for the whole family pass. The price updates automatically based on the selected headcount.</p>
         </div>
 
         <div style={styles.inputGroup}>

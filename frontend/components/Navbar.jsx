@@ -4,14 +4,23 @@ import { useWeb3 } from '../utils/Web3Context';
 
 export default function Navbar() {
   const router = useRouter();
-  const { account, connectWallet, loading } = useWeb3();
+  const { account, connectWallet, loading, isOwner, isScanner } = useWeb3();
 
   const links = [
     { label: 'HOME', href: '/', variant: 'secondary' },
     { label: 'MARKETPLACE', href: '/marketplace', variant: 'primary' },
+    { label: 'LEADERBOARD', href: '/leaderboard', variant: 'primary' },
     { label: 'MY TICKETS', href: '/tickets', variant: 'primary' },
     { label: 'DOCS', href: '/docs', variant: 'secondary' },
   ];
+
+  if (isOwner) {
+    links.push({ label: 'ADMIN', href: '/admin', variant: 'primary' });
+  }
+
+  if (isOwner || isScanner) {
+    links.push({ label: 'SCANNER', href: '/scanner', variant: 'secondary' });
+  }
 
   return (
     <nav style={styles.nav}>

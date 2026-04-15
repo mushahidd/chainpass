@@ -101,7 +101,7 @@ function PriceCapDemo() {
     try {
       // For the demo, we try to list Token ID 0 (the first KK vs LQ ticket minted)
       // The contract will check the price cap logic
-      const priceInWei = ethers.parseEther((parseFloat(price) / 20000).toString()); // Mocking exchange rate to ETH
+      const priceInWei = ethers.parseEther((parseFloat(price) / 20000).toString()); // Mocking exchange rate to WIRE
       
       const tx = await contract.listTicket(0, priceInWei);
       await tx.wait();

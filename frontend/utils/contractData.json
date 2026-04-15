@@ -1,5 +1,5 @@
 {
-  "address": "0x7Cd54B2E1355d4404f3b0f9CFa24d33c336BD512",
+  "address": "0x800e5dd0736C3F4A5f23A0D0D8984c3eEd97Bd88",
   "abi": [
     {
       "inputs": [],
@@ -132,6 +132,11 @@
     {
       "inputs": [],
       "name": "InvalidEnclosureConfig",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidPersonCount",
       "type": "error"
     },
     {
@@ -610,6 +615,11 @@
             },
             {
               "internalType": "uint256",
+              "name": "personCount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
               "name": "paidPrice",
               "type": "uint256"
             },
@@ -780,6 +790,11 @@
           "internalType": "bytes32",
           "name": "_cnicHash",
           "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_personCount",
+          "type": "uint256"
         },
         {
           "internalType": "string",
@@ -1032,6 +1047,11 @@
           "internalType": "string",
           "name": "enclosure",
           "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "personCount",
+          "type": "uint256"
         },
         {
           "internalType": "uint256",

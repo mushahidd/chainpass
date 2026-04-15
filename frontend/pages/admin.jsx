@@ -220,7 +220,7 @@ export default function AdminDashboard() {
                            value={enc.price}
                            onChange={(e) => handleEnclosureChange(idx, 'price', e.target.value)}
                            style={{ ...styles.input, ...styles.inlineInput, flex: 1 }}
-                           placeholder="PRICE ETH"
+                           placeholder="PRICE WIRE"
                          />
                          <input
                            required

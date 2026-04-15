@@ -10,6 +10,7 @@ error TicketAlreadyUsed();
 error NotAuthorizedScanner();
 error MatchNotActive();
 error WalletLimitReached();
+error InvalidPersonCount();
 error IncorrectPayment();
 error MatchSoldOut();
 error InvalidEnclosureConfig();
@@ -44,6 +45,7 @@ contract ChainPass is ERC721URIStorage, Ownable {
     struct Ticket {
         uint256 matchId;
         string enclosure;
+        uint256 personCount;
         uint256 paidPrice;
         bytes32 cnicHash;
         bool isUsed;
@@ -55,7 +57,7 @@ contract ChainPass is ERC721URIStorage, Ownable {
     mapping(uint256 => string[]) private _matchEnclosureNames;
     mapping(uint256 => mapping(bytes32 => Enclosure)) private _matchEnclosures;
 
-    // matchId -> wallet -> count (Max 5)
+    // matchId -> wallet -> family headcount for the single NFT pass
     mapping(uint256 => mapping(address => uint8)) public matchWalletMintCount;
 
     mapping(address => bool) public scanners;
@@ -148,6 +150,7 @@ contract ChainPass is ERC721URIStorage, Ownable {
         uint256 _matchId,
         string memory _enclosure,
         bytes32 _cnicHash,
+        uint256 _personCount,
         string memory _uri
     ) public payable {
         Match storage evData = matches[_matchId];
@@ -158,11 +161,12 @@ contract ChainPass is ERC721URIStorage, Ownable {
         if (evData.currentMinted >= evData.maxCapacity) revert MatchSoldOut();
         if (!enclosureObj.exists) revert EnclosureNotFound();
         if (enclosureObj.currentMinted >= enclosureObj.capacity) revert EnclosureSoldOut();
-        if (msg.value != enclosureObj.price) revert IncorrectPayment();
-        if (matchWalletMintCount[_matchId][msg.sender] >= MAX_TICKETS_PER_WALLET) revert WalletLimitReached();
+        if (_personCount == 0 || _personCount > MAX_TICKETS_PER_WALLET) revert InvalidPersonCount();
+        if (matchWalletMintCount[_matchId][msg.sender] != 0) revert WalletLimitReached();
+        if (msg.value != enclosureObj.price * _personCount) revert IncorrectPayment();
 
         // Register constraints BEFORE mint
-        matchWalletMintCount[_matchId][msg.sender]++;
+        matchWalletMintCount[_matchId][msg.sender] = uint8(_personCount);
         evData.currentMinted++;
         enclosureObj.currentMinted++;
 
@@ -173,7 +177,8 @@ contract ChainPass is ERC721URIStorage, Ownable {
         tickets[tokenId] = Ticket({
             matchId: _matchId,
             enclosure: _enclosure,
-            paidPrice: enclosureObj.price,
+            personCount: _personCount,
+            paidPrice: enclosureObj.price * _personCount,
             cnicHash: _cnicHash,
             isUsed: false
         });

@@ -12,6 +12,8 @@ export function Web3Provider({ children }) {
   const [contract, setContract] = useState(null);
   const [provider, setProvider] = useState(null);
   const [chainId, setChainId] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [isScanner, setIsScanner] = useState(false);
   const [web3Error, setWeb3Error] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,6 +22,8 @@ export function Web3Provider({ children }) {
     setContract(null);
     setProvider(null);
     setChainId(null);
+    setIsOwner(false);
+    setIsScanner(false);
   }, []);
 
   const syncWalletState = useCallback(async (requestAccounts = false) => {
@@ -73,12 +77,21 @@ export function Web3Provider({ children }) {
         signer
       );
 
+      const [onChainOwner, scannerEnabled] = await Promise.all([
+        chainPassContract.owner(),
+        chainPassContract.scanners(activeAccount),
+      ]);
+
       setContract(chainPassContract);
+      setIsOwner(onChainOwner.toLowerCase() === activeAccount.toLowerCase());
+      setIsScanner(Boolean(scannerEnabled));
       setWeb3Error('');
       console.log('Connected to:', activeAccount, 'on chain:', activeChainId);
     } catch (error) {
       console.error('Connection failed:', error);
       setContract(null);
+      setIsOwner(false);
+      setIsScanner(false);
       setWeb3Error('Wallet connection failed. Check browser console for details.');
     } finally {
       setLoading(false);
@@ -126,6 +139,9 @@ export function Web3Provider({ children }) {
         provider,
         chainId,
         expectedChainId: EXPECTED_CHAIN_ID,
+        isOwner,
+        isScanner,
+        canAccessAdminTools: isOwner || isScanner,
         web3Error,
         connectWallet,
         loading

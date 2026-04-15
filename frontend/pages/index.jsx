@@ -3,7 +3,6 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import Ticker from '../components/Ticker';
-import MintForm from '../components/MintForm';
 import StatsBand from '../components/StatsBand';
 import FeaturesSection from '../components/FeaturesSection';
 import HowItWorks from '../components/HowItWorks';
@@ -76,7 +75,24 @@ export default function Home() {
             </div>
 
             <div style={styles.heroRight}>
-              <MintForm />
+              <div style={styles.marketPreview}>
+                <div style={styles.marketTag}>// MARKETPLACE</div>
+                <h2 style={styles.marketTitle}>BUY TICKETS, SEE THE LEADERBOARD, AND TRACK LIVE DEMAND.</h2>
+                <p style={styles.marketCopy}>
+                  The purchasing flow now lives in the marketplace. Use it to mint tickets, then watch the leaderboard update as the lifetime ticket counts shift.
+                </p>
+                <Link href="/marketplace" className="nav-cta nav-cta--dark">OPEN_MARKETPLACE ↗</Link>
+                <div style={styles.marketStats}>
+                  <div style={styles.marketStat}>
+                    <div style={styles.marketStatValue}>LIVE</div>
+                    <div style={styles.marketStatLabel}>LEADERBOARD</div>
+                  </div>
+                  <div style={styles.marketStat}>
+                    <div style={styles.marketStatValue}>WIRE</div>
+                    <div style={styles.marketStatLabel}>PAYMENTS</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -174,5 +190,56 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     background: 'var(--surface)',
+    padding: '32px',
+    justifyContent: 'center',
+  },
+  marketPreview: {
+    border: '1px solid var(--border)',
+    background: 'linear-gradient(180deg, rgba(0,255,106,0.04), rgba(255,255,255,0.015))',
+    padding: '28px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '18px',
+  },
+  marketTag: {
+    fontFamily: 'var(--mono)',
+    fontSize: '10px',
+    color: 'var(--g)',
+    letterSpacing: '2.5px',
+  },
+  marketTitle: {
+    fontFamily: 'var(--display)',
+    fontSize: '28px',
+    lineHeight: 1.06,
+    letterSpacing: '1px',
+  },
+  marketCopy: {
+    fontFamily: 'var(--mono)',
+    fontSize: '12px',
+    lineHeight: 1.7,
+    color: 'var(--muted)',
+  },
+  marketStats: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: '12px',
+    marginTop: '6px',
+  },
+  marketStat: {
+    border: '1px solid var(--border)',
+    padding: '14px',
+    background: 'rgba(255,255,255,0.02)',
+  },
+  marketStatValue: {
+    fontFamily: 'var(--display)',
+    fontSize: '22px',
+    color: 'var(--text)',
+    marginBottom: '6px',
+  },
+  marketStatLabel: {
+    fontFamily: 'var(--mono)',
+    fontSize: '9px',
+    color: 'var(--dim)',
+    letterSpacing: '1.5px',
   },
 };

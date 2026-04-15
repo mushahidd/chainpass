@@ -4,7 +4,8 @@ import contractInfo from '../../utils/contractData.json';
 const QR_TTL_SECONDS = 30;
 
 const ABI = [
-  "function getTicketData(uint256 tokenId) view returns (address owner, tuple(uint256 matchId, string enclosure, uint256 paidPrice, bytes32 cnicHash, bool isUsed) ticketObj, tuple(string teams, string stadium, uint256 maxCapacity, uint256 currentMinted, bool isActive) matchObj)",
+  "function getTicketData(uint256 tokenId) view returns (address owner, tuple(uint256 matchId, string enclosure, uint256 personCount, uint256 paidPrice, bytes32 cnicHash, bool isUsed) ticketObj, tuple(string teams, string stadium, uint256 maxCapacity, uint256 currentMinted, bool isActive) matchObj)",
+  "function getEnclosureDetails(uint256 matchId, string enclosure) view returns (uint256 price, uint256 capacity, uint256 currentMinted, bool exists)",
   "function markTicketAsUsed(uint256 tokenId)",
   "function ownerOf(uint256 tokenId) view returns (address)"
 ];
@@ -80,7 +81,9 @@ export default async function handler(req, res) {
     await tx.wait();
 
     // 9. Format Success Return string with precise routing
-    const routingStr = `${matchInfo.teams}|${matchInfo.stadium}|ENCLOSURE: ${ticketInfo.enclosure}`;
+    const enclosureDetails = await contract.getEnclosureDetails(ticketInfo.matchId, ticketInfo.enclosure);
+    const personCount = enclosureDetails[0] > 0n ? Number(ticketInfo.paidPrice / enclosureDetails[0]) : 1;
+    const routingStr = `${matchInfo.teams}|${matchInfo.stadium}|ENCLOSURE: ${ticketInfo.enclosure}|PERSON_COUNT: ${personCount}`;
 
     return res.status(200).json({ valid: true, message: routingStr, txHash: tx.hash });
 

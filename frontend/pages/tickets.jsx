@@ -136,6 +136,7 @@ export default function MyTickets() {
           myItems.push({
             id: i,
             originalPrice: ethers.formatEther(t.paidPrice),
+            personCount: Number(t.personCount),
             matchDetails: m.teams,
             stadium: m.stadium,
             enclosure: t.enclosure,
@@ -194,8 +195,12 @@ export default function MyTickets() {
                       
                       <div style={styles.details}>
                         <div style={styles.detRow}>
-                          <span style={styles.detLabel}>ORIGINAL_PRICE</span>
-                          <span style={styles.detVal}>{t.originalPrice} ETH</span>
+                          <span style={styles.detLabel}>PERSON_COUNT</span>
+                          <span style={styles.detVal}>{t.personCount}</span>
+                        </div>
+                        <div style={styles.detRow}>
+                          <span style={styles.detLabel}>TOTAL_PRICE</span>
+                          <span style={styles.detVal}>{t.originalPrice} WIRE</span>
                         </div>
                         <div style={styles.detRow}>
                           <span style={styles.detLabel}>ENTRY_STATUS</span>
