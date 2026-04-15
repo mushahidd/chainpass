@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Navbar from '../components/Navbar';
 import Ticker from '../components/Ticker';
 import { useWeb3 } from '../utils/Web3Context';
+import { useNotification } from '../utils/NotificationContext';
 import { ethers } from 'ethers';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -22,7 +23,7 @@ function sigToBase64Url(sig) {
   return toBase64Url(bytes);
 }
 
-function DynamicQRCode({ ticket, account, provider }) {
+function DynamicQRCode({ ticket, account, provider, addNotification }) {
   const [qrData, setQrData] = useState(null);
   const [timer, setTimer] = useState(QR_TTL_SECONDS);
   const [sessionWallet, setSessionWallet] = useState(null);
@@ -44,7 +45,7 @@ function DynamicQRCode({ ticket, account, provider }) {
     } catch (err) {
       console.error(err);
       setIsSigning(false);
-      alert("Failed to authorize session key.");
+      addNotification("Failed to authorize session key.", 'error');
     }
   };
 
@@ -133,6 +134,7 @@ function DynamicQRCode({ ticket, account, provider }) {
 
 export default function MyTickets() {
   const { contract, account, provider } = useWeb3();
+  const { addNotification } = useNotification();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -236,7 +238,7 @@ export default function MyTickets() {
                       {t.isUsed ? (
                         <div style={styles.usedBadge}>TICKET USED</div>
                       ) : (
-                        <DynamicQRCode ticket={t} account={account} provider={provider} />
+                        <DynamicQRCode ticket={t} account={account} provider={provider} addNotification={addNotification} />
                       )}
                       <div style={styles.qrInstruction}>PRESENT_AT_GATE</div>
                     </div>
@@ -257,7 +259,7 @@ const styles = {
   header: { marginBottom: '60px' },
   secTag: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--g)', letterSpacing: '3px', marginBottom: '12px' },
   title: { fontFamily: 'var(--display)', fontSize: '64px', letterSpacing: '2px', marginBottom: '20px' },
-  desc: { fontFamily: 'var(--body)', fontSize: '16px', color: 'var(--muted)', lineHeight: 1.6, maxWidth: '600px' },
+  desc: { fontFamily: 'var(--body)', fontSize: '16px', color: 'var(--text)', lineHeight: 1.6, maxWidth: '600px', opacity: 0.9 },
   loading: { fontFamily: 'var(--mono)', fontSize: '14px', color: 'var(--muted)', textAlign: 'center', padding: '100px' },
   empty: { textAlign: 'center', padding: '100px', background: 'var(--surface)', border: '1px solid var(--border)' },
   emptyHex: { 

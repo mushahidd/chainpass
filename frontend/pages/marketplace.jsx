@@ -80,9 +80,10 @@ const styles = {
   },
   desc: {
     fontFamily: 'var(--mono)',
-    fontSize: '13px',
+    fontSize: '14px',
     lineHeight: 1.8,
-    color: 'var(--muted)',
+    color: 'var(--text)',
+    opacity: 0.9,
     maxWidth: '760px',
   },
   marketShell: {

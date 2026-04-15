@@ -77,7 +77,10 @@ export default function Home() {
             <div style={styles.heroRight}>
               <div style={styles.marketPreview}>
                 <div style={styles.marketTag}>// MARKETPLACE</div>
-                <h2 style={styles.marketTitle}>BUY TICKETS, SEE THE LEADERBOARD, AND TRACK LIVE DEMAND.</h2>
+                <h2 style={styles.marketTitle}>
+                  <span style={styles.marketAccentGreen}>BUY TICKETS</span>, SEE THE LEADERBOARD, AND{' '}
+                  <span style={styles.marketAccentGold}>TRACK LIVE DEMAND</span>.
+                </h2>
                 <p style={styles.marketCopy}>
                   The purchasing flow now lives in the marketplace. Use it to mint tickets, then watch the leaderboard update as the lifetime ticket counts shift.
                 </p>
@@ -161,13 +164,14 @@ const styles = {
   },
   heroDesc: {
     fontFamily: 'var(--body)',
-    fontSize: '14px',
-    fontWeight: 300,
-    color: 'var(--muted)',
+    fontSize: '15px',
+    fontWeight: 400,
+    color: 'var(--text)',
     lineHeight: 1.8,
     maxWidth: '480px',
     marginBottom: '40px',
     letterSpacing: '0.3px',
+    opacity: 0.9,
   },
   heroActions: {
     display: 'flex',
@@ -212,12 +216,23 @@ const styles = {
     fontSize: '28px',
     lineHeight: 1.06,
     letterSpacing: '1px',
+    color: 'var(--text)',
+    textShadow: '0 0 14px rgba(255, 255, 255, 0.06)',
+  },
+  marketAccentGreen: {
+    color: 'var(--g)',
+    textShadow: '0 0 14px rgba(0, 255, 106, 0.25)',
+  },
+  marketAccentGold: {
+    color: 'var(--gold)',
+    textShadow: '0 0 12px rgba(232, 184, 75, 0.24)',
   },
   marketCopy: {
     fontFamily: 'var(--mono)',
-    fontSize: '12px',
+    fontSize: '13px',
     lineHeight: 1.7,
-    color: 'var(--muted)',
+    color: 'var(--text)',
+    opacity: 0.88,
   },
   marketStats: {
     display: 'grid',

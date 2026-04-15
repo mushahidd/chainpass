@@ -17,7 +17,16 @@ export default function Ticker() {
       {items.map((item, i) => (
         <span key={i} style={styles.item}>
           {item.label}:{' '}
-          <b style={{ color: item.gold ? 'var(--gold)' : 'var(--g)', fontWeight: 400 }}>
+          <b
+            style={{
+              color: item.gold ? 'var(--gold)' : 'var(--g)',
+              fontWeight: 700,
+              letterSpacing: '0.4px',
+              textShadow: item.gold
+                ? '0 0 10px rgba(232, 184, 75, 0.28)'
+                : '0 0 12px rgba(0, 255, 106, 0.3)',
+            }}
+          >
             {item.value}
           </b>
         </span>
@@ -59,9 +68,9 @@ const styles = {
   },
   item: {
     fontFamily: 'var(--mono)',
-    fontSize: '9px',
+    fontSize: '10px',
     letterSpacing: '1.5px',
-    color: 'var(--dim)',
+    color: 'var(--muted)',
     padding: '0 24px',
     borderRight: '1px solid var(--border)',
     whiteSpace: 'nowrap',

@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Navbar from '../components/Navbar';
 import { useWeb3 } from '../utils/Web3Context';
+import { useNotification } from '../utils/NotificationContext';
 import { ethers } from 'ethers';
 
 export default function AdminDashboard() {
   const { contract, account, web3Error, chainId, expectedChainId } = useWeb3();
+  const { addNotification } = useNotification();
   const [isOwner, setIsOwner] = useState(false);
   const [ownerAddress, setOwnerAddress] = useState('');
   const [loading, setLoading] = useState(true);
@@ -83,10 +85,22 @@ export default function AdminDashboard() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!form.teams || !form.stadium) return alert('Fill all required fields!');
-    if (!form.enclosures.length) return alert('Add at least one enclosure.');
-    if (!contract) return alert('Contract is unavailable on the active wallet network.');
-    if (!isOwner) return alert('Only the contract owner can initialize matches.');
+    if (!form.teams || !form.stadium) {
+      addNotification('Fill all required fields!', 'error');
+      return;
+    }
+    if (!form.enclosures.length) {
+      addNotification('Add at least one enclosure.', 'error');
+      return;
+    }
+    if (!contract) {
+      addNotification('Contract is unavailable on the active wallet network.', 'error');
+      return;
+    }
+    if (!isOwner) {
+      addNotification('Only the contract owner can initialize matches.', 'error');
+      return;
+    }
 
     setCreating(true);
     try {
@@ -126,7 +140,7 @@ export default function AdminDashboard() {
       );
       await tx.wait();
       
-      alert(`SUCCESS: Active Match Initialized For: ${form.teams}`);
+      addNotification(`SUCCESS: Active Match Initialized For: ${form.teams}`, 'success');
       setForm({
         teams: '',
         stadium: '',
@@ -134,7 +148,7 @@ export default function AdminDashboard() {
       });
     } catch (err) {
       console.error("Match Admin failed:", err);
-      alert(err?.message || "FAILED to initialize match. Check console.");
+      addNotification(err?.message || "FAILED to initialize match. Check console.", 'error');
     } finally {
       setCreating(false);
     }
@@ -282,7 +296,7 @@ const styles = {
   header: { marginBottom: '60px' },
   secTag: { fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--g)', letterSpacing: '3px', marginBottom: '12px' },
   title: { fontFamily: 'var(--display)', fontSize: '64px', letterSpacing: '2px', marginBottom: '20px' },
-  desc: { fontFamily: 'var(--body)', fontSize: '16px', color: 'var(--muted)', lineHeight: 1.6, maxWidth: '600px' },
+  desc: { fontFamily: 'var(--body)', fontSize: '16px', color: 'var(--text)', lineHeight: 1.6, maxWidth: '600px', opacity: 0.9 },
   loading: { fontFamily: 'var(--mono)', fontSize: '14px', color: 'var(--muted)', textAlign: 'center', padding: '100px' },
   diagnostic: { fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--muted)', marginTop: '12px', wordBreak: 'break-all' },
   empty: { textAlign: 'center', padding: '100px', background: 'var(--surface)', border: '1px solid var(--border)' },

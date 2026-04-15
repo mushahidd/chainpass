@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useWeb3 } from '../utils/Web3Context';
+import CustomSelect from './CustomSelect';
 import { ethers } from 'ethers';
 import contractInfo from '../utils/contractData.json';
 
@@ -226,13 +227,16 @@ export default function MintForm() {
           ) : matches.length === 0 ? (
              <div style={styles.input}>No active matches available.</div>
           ) : (
-            <select name="matchId" value={form.matchId} onChange={handleChange} style={styles.input}>
-              {matches.map(m => (
-                <option key={m.id} value={m.id}>
-                  {m.teams} ({m.currentMinted.toString()}/{m.maxCapacity.toString()} seats)
-                </option>
-              ))}
-            </select>
+            <CustomSelect
+              name="matchId"
+              value={form.matchId}
+              onChange={handleChange}
+              options={matches.map(m => ({
+                value: m.id.toString(),
+                label: `${m.teams} (${m.currentMinted.toString()}/${m.maxCapacity.toString()} seats)`
+              }))}
+              placeholder="Select a match..."
+            />
           )}
         </div>
 
@@ -251,29 +255,34 @@ export default function MintForm() {
             }
 
             return (
-              <select name="enclosure" value={form.enclosure} onChange={handleChange} style={styles.input}>
-                {available.map((enc) => {
+              <CustomSelect
+                name="enclosure"
+                value={form.enclosure}
+                onChange={handleChange}
+                options={available.map((enc) => {
                   const remaining = Number(enc.capacity) - Number(enc.minted);
-                  return (
-                    <option key={enc.name} value={enc.name}>
-                      {enc.name} - {ethers.formatEther(enc.price)} WIRE ({remaining} left)
-                    </option>
-                  );
+                  return {
+                    value: enc.name,
+                    label: `${enc.name} - ${ethers.formatEther(enc.price)} WIRE (${remaining} left)`
+                  };
                 })}
-              </select>
+                placeholder="Select an enclosure..."
+              />
             );
           })()}
         </div>
 
         <div style={styles.inputGroup}>
           <label style={styles.label}>PERSON_COUNT</label>
-          <select name="personCount" value={form.personCount} onChange={handleChange} style={styles.input}>
-            {[1, 2, 3, 4, 5].map((count) => (
-              <option key={count} value={count}>
-                {count} PERSON{count > 1 ? 'S' : ''}
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            name="personCount"
+            value={form.personCount}
+            onChange={handleChange}
+            options={[1, 2, 3, 4, 5].map((count) => ({
+              value: count.toString(),
+              label: `${count} PERSON${count > 1 ? 'S' : ''}`
+            }))}
+          />
           <p style={styles.privacyNote}>* One NFT will be minted for the whole family pass. The price updates automatically based on the selected headcount.</p>
         </div>
 

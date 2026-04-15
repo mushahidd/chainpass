@@ -17,8 +17,8 @@
   --border: #0f2415;
   --border2: #1a3520;
   --text: #d4edd8;
-  --muted: #4a7055;
-  --dim: #2a4530;
+  --muted: #8eb79a;
+  --dim: #6d9679;
   --danger: #ff3b3b;
   --mono: 'Space Mono', monospace;
   --display: 'Bebas Neue', sans-serif;
@@ -36,6 +36,11 @@ html {
 body {
   background: var(--bg);
   min-height: 100vh;
+  text-rendering: optimizeLegibility;
+}
+
+p {
+  color: var(--muted);
 }
 
 ::selection {

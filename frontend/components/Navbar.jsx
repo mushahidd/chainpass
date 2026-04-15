@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import { useWeb3 } from '../utils/Web3Context';
 
 export default function Navbar() {
@@ -24,19 +25,21 @@ export default function Navbar() {
 
   return (
     <nav style={styles.nav}>
-      <Link href="/" style={styles.logoMark}>
-        <img
-          src="/chainpass-logo.png"
-          alt="ChainPass logo"
-          style={styles.logoImage}
-        />
-        <div>
-          <div style={styles.logoText}>
-            <span style={{ color: 'var(--g)' }}>CHAIN</span>PASS
+      <div style={styles.brandDock}>
+        <Link href="/" style={styles.logoMark}>
+          <img
+            src="/chainpass-logo.png"
+            alt="ChainPass logo"
+            style={styles.logoImage}
+          />
+          <div>
+            <div style={styles.logoText}>
+              <span style={{ color: 'var(--g)' }}>CHAIN</span>PASS
+            </div>
+            <div style={styles.logoSub}>PSL · BLOCKCHAIN TICKETING</div>
           </div>
-          <div style={styles.logoSub}>PSL · BLOCKCHAIN TICKETING</div>
-        </div>
-      </Link>
+        </Link>
+      </div>
 
       <div style={styles.navCenter}>
         {links.map((link) => (
@@ -50,7 +53,7 @@ export default function Navbar() {
         ))}
       </div>
 
-      <button 
+      <button
         className="nav-cta"
         onClick={connectWallet}
         disabled={loading}
@@ -64,9 +67,10 @@ export default function Navbar() {
 
 const styles = {
   nav: {
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: 'auto 1fr auto',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    columnGap: '22px',
     padding: '20px 48px',
     borderBottom: '1px solid var(--border)',
     background: 'rgba(4,8,10,0.92)',
@@ -74,6 +78,11 @@ const styles = {
     position: 'sticky',
     top: 0,
     zIndex: 100,
+  },
+  brandDock: {
+    justifySelf: 'start',
+    width: '300px',
+    minWidth: '300px',
   },
   logoMark: {
     display: 'flex',
@@ -103,6 +112,8 @@ const styles = {
   },
   navCenter: {
     display: 'flex',
-    gap: '10px',
+    gap: '8px',
+    justifySelf: 'center',
+    justifyContent: 'center',
   },
 };

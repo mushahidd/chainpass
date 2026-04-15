@@ -16,6 +16,7 @@ export function Web3Provider({ children }) {
   const [isScanner, setIsScanner] = useState(false);
   const [web3Error, setWeb3Error] = useState('');
   const [loading, setLoading] = useState(false);
+  const [manuallyDisconnected, setManuallyDisconnected] = useState(false);
 
   const clearSession = useCallback(() => {
     setAccount(null);
@@ -99,17 +100,48 @@ export function Web3Provider({ children }) {
   }, [clearSession]);
 
   const connectWallet = async () => {
+    setManuallyDisconnected(false);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('chainpass_wallet_disconnected');
+    }
     await syncWalletState(true);
   };
+
+  const disconnectWallet = useCallback(() => {
+    clearSession();
+    setWeb3Error('');
+    setManuallyDisconnected(true);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('chainpass_wallet_disconnected', '1');
+    }
+  }, [clearSession]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const disconnectedFlag = window.localStorage.getItem('chainpass_wallet_disconnected') === '1';
+    if (disconnectedFlag) {
+      setManuallyDisconnected(true);
+      clearSession();
+      setWeb3Error('');
+    }
+  }, [clearSession]);
 
   useEffect(() => {
     if (!window.ethereum) {
       return;
     }
 
-    syncWalletState(false);
+    if (!manuallyDisconnected) {
+      syncWalletState(false);
+    }
 
     const handleAccountsChanged = (accounts) => {
+      if (manuallyDisconnected) {
+        clearSession();
+        setWeb3Error('');
+        return;
+      }
+
       if (!accounts.length) {
         clearSession();
         setWeb3Error('');
@@ -119,6 +151,11 @@ export function Web3Provider({ children }) {
     };
 
     const handleChainChanged = () => {
+      if (manuallyDisconnected) {
+        clearSession();
+        setWeb3Error('');
+        return;
+      }
       syncWalletState(false);
     };
 
@@ -129,7 +166,7 @@ export function Web3Provider({ children }) {
       window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
       window.ethereum.removeListener('chainChanged', handleChainChanged);
     };
-  }, [clearSession, syncWalletState]);
+  }, [clearSession, syncWalletState, manuallyDisconnected]);
 
   return (
     <Web3Context.Provider
@@ -144,6 +181,7 @@ export function Web3Provider({ children }) {
         canAccessAdminTools: isOwner || isScanner,
         web3Error,
         connectWallet,
+        disconnectWallet,
         loading
       }}
     >

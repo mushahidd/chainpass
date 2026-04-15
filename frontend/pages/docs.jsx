@@ -113,7 +113,7 @@ const styles = {
   secHeader: { display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' },
   secNum: { fontFamily: 'var(--display)', fontSize: '24px', color: 'var(--border2)' },
   secTitle: { fontFamily: 'var(--display)', fontSize: '28px', letterSpacing: '2px' },
-  secText: { fontFamily: 'var(--body)', fontSize: '17px', color: 'var(--muted)', lineHeight: 1.8 },
+  secText: { fontFamily: 'var(--body)', fontSize: '17px', color: 'var(--text)', lineHeight: 1.8, opacity: 0.9 },
   footerInfo: { 
     marginTop: '100px', padding: '32px', background: 'var(--surface)', 
     border: '1px solid var(--border)', display: 'flex', gap: '24px', alignItems: 'center' 
@@ -124,5 +124,5 @@ const styles = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--bg)', flexShrink: 0
   },
-  footerText: { fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--dim)', lineHeight: 1.6 }
+  footerText: { fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--muted)', lineHeight: 1.6 }
 };
