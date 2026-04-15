@@ -94,14 +94,14 @@ function DynamicQRCode({ ticket, account, provider }) {
         {qrData ? (
           <QRCodeSVG
             value={qrData}
-            size={288}
+            size={400}
             fgColor="#111111"
             bgColor="#ffffff"
             includeMargin={true}
-            level="L"
+            level="M"
           />
         ) : (
-          <div style={{ height: 288, display: 'flex', alignItems: 'center' }}>GENERATING...</div>
+          <div style={{ height: 400, display: 'flex', alignItems: 'center' }}>GENERATING...</div>
         )}
       </div>
       <div style={styles.qrMeta}>
