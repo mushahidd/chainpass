@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Navbar from '../components/Navbar';
 import { Html5Qrcode, Html5QrcodeScanner, Html5QrcodeSupportedFormats, Html5QrcodeScanType } from 'html5-qrcode';
 import { ethers } from 'ethers';
+import jsQR from 'jsqr';
 
 const SCANNER_VERSION = 2;
 
@@ -18,6 +19,51 @@ export default function Scanner() {
   const onScanSuccessRef = useRef(null);
   const onScanFailureRef = useRef(null);
   const fileDecoderRef = useRef(null);
+
+  const loadImageElementFromFile = async (file) => {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = (err) => reject(err);
+        el.src = url;
+      });
+      return img;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const drawFileToCanvas = async (file, { maxDim = 1400 } = {}) => {
+    let source;
+    try {
+      if (typeof createImageBitmap === 'function') {
+        source = await createImageBitmap(file);
+      }
+    } catch {
+      source = null;
+    }
+
+    if (!source) {
+      source = await loadImageElementFromFile(file);
+    }
+
+    const width = source.width || source.naturalWidth;
+    const height = source.height || source.naturalHeight;
+    const scale = Math.min(1, maxDim / Math.max(width, height));
+    const w = Math.max(1, Math.floor(width * scale));
+    const h = Math.max(1, Math.floor(height * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) throw new Error('CANVAS_CONTEXT_UNAVAILABLE');
+
+    ctx.drawImage(source, 0, 0, w, h);
+    return { canvas, ctx, w, h, source };
+  };
 
   const acceptDecodedPayload = async (decodedText) => {
     if (didHandleScanRef.current) return;
@@ -136,33 +182,67 @@ export default function Scanner() {
     if (!file) return;
 
     try {
-      // Best path (Chromium): native BarcodeDetector.
+      // 1) Best path (Chromium): native BarcodeDetector.
       if (typeof window !== 'undefined' && typeof window.BarcodeDetector === 'function') {
-        const bitmap = await createImageBitmap(file);
-        const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
-        const barcodes = await detector.detect(bitmap);
-        const rawValue = barcodes?.[0]?.rawValue;
+        try {
+          let source;
+          try {
+            if (typeof createImageBitmap === 'function') {
+              source = await createImageBitmap(file);
+            }
+          } catch {
+            source = null;
+          }
 
-        if (!rawValue) {
-          setScanStatus('INVALID');
-          setStatusMsg('ACCESS DENIED: QR_NOT_DETECTED');
-          setTimeout(() => resetScanner(), 2500);
-          return;
+          if (!source) {
+            source = await loadImageElementFromFile(file);
+          }
+
+          const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+          const barcodes = await detector.detect(source);
+          const rawValue = barcodes?.[0]?.rawValue;
+          if (rawValue) {
+            await acceptDecodedPayload(rawValue);
+            return;
+          }
+        } catch (err) {
+          console.debug('BarcodeDetector failed, falling back...', err);
+        }
+      }
+
+      // 2) Fallback: html5-qrcode's JS decoder.
+      try {
+        if (!fileDecoderRef.current) {
+          fileDecoderRef.current = new Html5Qrcode('qr-file-reader');
         }
 
-        await acceptDecodedPayload(rawValue);
-        return;
+        // showImage=true improves reliability because html5-qrcode renders the image
+        // into the target element before decoding (some browsers need this path).
+        const decodedText = await fileDecoderRef.current.scanFile(file, /* showImage= */ true);
+        if (decodedText) {
+          await acceptDecodedPayload(decodedText);
+          return;
+        }
+      } catch (err) {
+        console.debug('html5-qrcode scanFile failed, falling back...', err);
       }
 
-      // Fallback (Firefox / older browsers): decode via html5-qrcode's JS decoder.
-      if (!fileDecoderRef.current) {
-        fileDecoderRef.current = new Html5Qrcode('qr-file-reader');
+      // 3) Final fallback: jsQR (pure JS QR decoder).
+      try {
+        const { ctx, w, h } = await drawFileToCanvas(file, { maxDim: 1400 });
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const code = jsQR(imgData.data, w, h, { inversionAttempts: 'attemptBoth' });
+        if (code?.data) {
+          await acceptDecodedPayload(code.data);
+          return;
+        }
+      } catch (err) {
+        console.debug('jsQR failed', err);
       }
 
-      // showImage=true improves reliability because html5-qrcode renders the image
-      // into the target element before decoding (some browsers need this path).
-      const decodedText = await fileDecoderRef.current.scanFile(file, /* showImage= */ true);
-      await acceptDecodedPayload(decodedText);
+      setScanStatus('INVALID');
+      setStatusMsg('ACCESS DENIED: QR_NOT_DETECTED');
+      setTimeout(() => resetScanner(), 2500);
     } catch (err) {
       console.error('Image scan failed', err);
       setScanStatus('INVALID');
